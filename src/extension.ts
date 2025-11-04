@@ -118,7 +118,7 @@ async function resolveImportAbsolute(fromFsPath: string, spec: string): Promise<
     }
   }
 
-  console.log(`Could not resolve: ${spec}`);
+  console.warn(`⚠️ Could not resolve import: ${spec}`);
   return null;
 }
 
@@ -176,10 +176,10 @@ export function activate(context: vscode.ExtensionContext) {
           const spec = imp.getModuleSpecifierValue();
           const resolved = await resolveImportAbsolute(uri.fsPath, spec);
           if (resolved) {
-            console.log(`✅ Static import: ${spec} -> ${resolved} in ${uri.fsPath}`);
+            console.log(`   ✅ Static import: ${spec} -> ${resolved} in ${uri.fsPath}`);
             referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
           } else {
-            console.log(`❌ Failed static import: ${spec} in ${uri.fsPath}`);
+            console.log(`   ❌ Failed static import: ${spec} in ${uri.fsPath}`);
           }
         }
 
@@ -190,8 +190,11 @@ export function activate(context: vscode.ExtensionContext) {
           const arg = dyn.getArguments()[0]?.getText().replace(/['"`]/g, '');
           if (!arg) {continue;}
           const resolved = await resolveImportAbsolute(uri.fsPath, arg);
-          if (resolved) {referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);} else {
-            console.log(`Failed to resolve dynamic import: ${arg} in ${uri.fsPath}`);
+          if (resolved) {
+            console.log(`   ⚡ Dynamic import: ${arg} -> ${resolved} in ${uri.fsPath}`);
+            referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
+          } else {
+            console.log(`   ❌ Failed dynamic import: ${arg} in ${uri.fsPath}`);
           }
         }
       } catch (err) {
