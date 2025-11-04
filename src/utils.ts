@@ -185,6 +185,10 @@ export function createDecorationProvider(referenceMap: Map<string, number>, emit
     onDidChangeFileDecorations: emitter.event,
     provideFileDecoration(uri) {
       if (referenceMap.size === 0 || !validExt.some(ext => uri.fsPath.endsWith(ext))) {return;}
+
+      // if outside /src/, skip
+      if (!uri.fsPath.includes(path.sep + 'src' + path.sep)) {return;}
+
       const count = referenceMap.get(uri.fsPath);
 
       if (count) {
