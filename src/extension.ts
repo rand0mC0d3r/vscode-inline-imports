@@ -1,3 +1,4 @@
+import * as path from 'path';
 import { Project } from 'ts-morph';
 import * as vscode from 'vscode';
 
@@ -7,13 +8,48 @@ export function activate(context: vscode.ExtensionContext) {
   const emitter = new vscode.EventEmitter<vscode.Uri[]>();
   const referenceMap = new Map<string, number>();
 
+  // helper to check file existence
+  async function fileExists(fsPath: string) {
+    try {
+      await vscode.workspace.fs.stat(vscode.Uri.file(fsPath));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async function resolveImportAbsolute(fromFsPath: string, spec: string) {
+    // only handle relative imports
+    if (!spec.startsWith('.')) {return null;}
+
+    const baseDir = path.dirname(fromFsPath);
+    const candidateBase = path.resolve(baseDir, spec);
+
+    const candidates = [
+      candidateBase,
+      `${candidateBase}.ts`,
+      `${candidateBase}.tsx`,
+      `${candidateBase}.js`,
+      `${candidateBase}.jsx`,
+      path.join(candidateBase, 'index.ts'),
+      path.join(candidateBase, 'index.tsx'),
+      path.join(candidateBase, 'index.js'),
+      path.join(candidateBase, 'index.jsx'),
+    ];
+
+    for (const c of candidates) {
+      if (await fileExists(c)) {return c;}
+    }
+    return null;
+  }
+
   const provider: vscode.FileDecorationProvider = {
     onDidChangeFileDecorations: emitter.event,
     provideFileDecoration(uri) {
       const count = referenceMap.get(uri.fsPath);
       // if (!count) {return;}
       return {
-        badge: 'dd',
+        badge: `dd`,
         // tooltip: `${count} imports reference this file`,
         // color: new vscode.ThemeColor('charts.blue')
       };
@@ -38,26 +74,30 @@ export function activate(context: vscode.ExtensionContext) {
       skipAddingFilesFromTsConfig: true
     });
 
-    // Find files (you can limit to "src" if you want)
-    const files = await vscode.workspace.findFiles('**/*.ts', '**/node_modules/**');
-    const jsxFiles = await vscode.workspace.findFiles('**/*.tsx', '**/node_modules/**');
-    files.push(...jsxFiles);
+    // pick the file globs you want
+    const tsFiles = await vscode.workspace.findFiles('**/*.ts', '**/node_modules/**');
+    const tsxFiles = await vscode.workspace.findFiles('**/*.tsx', '**/node_modules/**');
+    const jsFiles = await vscode.workspace.findFiles('**/*.js', '**/node_modules/**');
+    const jsxFiles = await vscode.workspace.findFiles('**/*.jsx', '**/node_modules/**');
 
+    const files = [...tsFiles, ...tsxFiles, ...jsFiles, ...jsxFiles];
     console.log(`Found ${files.length} files`);
 
-    // Only process a few at once to avoid overloading
     for (const uri of files) {
+      // lightweight add - still benefits from ts-morph parsing imports
       const file = project.addSourceFileAtPathIfExists(uri.fsPath);
       if (!file) {continue;}
-
-      for (const imp of file.getImportDeclarations()) {
-        const spec = imp.getModuleSpecifierValue();
-        if (!spec.startsWith('.')) {continue;} // skip external imports
-        const dir = vscode.Uri.file(uri.fsPath).with({ path: uri.fsPath.replace(/[^/]+$/, '') });
-        const target = vscode.Uri.joinPath(dir, spec + (spec.endsWith('.js') ? '' : '.js'));
-        const path = target.fsPath;
-        console.log(`Found import from ${uri.fsPath} to ${path}`);
-        referenceMap.set(path, (referenceMap.get(path) ?? 0) + 1);
+      try {
+        for (const imp of file.getImportDeclarations()) {
+          const spec = imp.getModuleSpecifierValue();
+          if (!spec.startsWith('.')) {continue;} // skip externals
+          const resolved = await resolveImportAbsolute(uri.fsPath, spec);
+          if (resolved) {
+            referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
+          }
+        }
+      } catch (err) {
+        console.error('Error scanning file', uri.fsPath, err);
       }
     }
 
