@@ -98,11 +98,7 @@ export async function resolveImportAbsolute(fromFsPath: string, spec: string): P
 }
 
 async function getAllSourceFiles(): Promise<vscode.Uri[]> {
-  const uris = await vscode.workspace.findFiles(
-    `${INPUT_ROOT_FOLDER}**/*.{ts,tsx,js,jsx}`,
-    '**/node_modules/**'
-  );
-  console.log(`🔎 Found ${uris.length} files.`);
+  const uris = await vscode.workspace.findFiles(`${INPUT_ROOT_FOLDER}**/*.{ts,tsx,js,jsx}`, '**/node_modules/**');
   return uris;
 }
 
@@ -141,7 +137,12 @@ export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, 
   referenceMap.clear();
 
   const project = new Project({
-    compilerOptions: { allowJs: true, checkJs: false, jsx: 1, moduleResolution: 2 },
+    compilerOptions: {
+      allowJs: true,
+      checkJs: false,
+      jsx: 1,
+      moduleResolution: 2
+   },
     skipFileDependencyResolution: true,
     skipAddingFilesFromTsConfig: true,
   });
