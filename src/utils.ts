@@ -49,6 +49,7 @@ async function resolveAliasMap(spec: string, workspaceRoot: string) {
     if (!spec.startsWith(prefix)) {continue;}
     const aliasTarget = path.resolve(workspaceRoot, 'src', folder, spec.replace(new RegExp(`^${prefix}`), ''));
     const resolved = await tryResolve(aliasTarget) || await tryResolve(path.join(aliasTarget, 'index'));
+    console.log('Resolved alias map:', resolved);
     if (resolved) {return resolved;}
   }
   return null;
@@ -61,6 +62,7 @@ async function resolveAtAlias(spec: string, workspaceRoot: string, baseUrl: stri
   ];
   for (const t of targets) {
     const resolved = await tryResolve(t) || await tryResolve(path.join(t, 'index'));
+    console.log('Resolved @ alias:', resolved);
     if (resolved) {return resolved;}
   }
   return null;
@@ -69,6 +71,7 @@ async function resolveAtAlias(spec: string, workspaceRoot: string, baseUrl: stri
 async function resolveRelative(spec: string, fromFsPath: string) {
   if (!spec.startsWith('.')) {return null;}
   const candidate = path.resolve(path.dirname(fromFsPath), spec);
+  console.log('Resolved relative import:', candidate);
   return (await tryResolve(candidate)) || (await tryResolve(path.join(candidate, 'index')));
 }
 
@@ -113,7 +116,7 @@ async function analyzeFile(uri: vscode.Uri, project: Project, referenceMap: Map<
   const record = (resolved: string | null, type: string, spec: string) => {
     if (resolved) {
       referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
-      console.log(`✅ ${type}: ${spec} -> ${resolved.split('/src').pop()}`);
+      // console.log(`✅ ${type}: ${spec} -> ${resolved.split('/src').pop()}`);
     } else {
       console.log(`❌ ${type} failed: ${spec}`);
     }

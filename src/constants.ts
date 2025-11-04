@@ -5,6 +5,8 @@ export const EXTENSIONS = [
 ];
 
 export const ALIASES = {
+  '@utils/': 'utils',
+  '@services/': 'services',
   '@store/': 'store',
   '@components/': 'components',
   '@views/': 'views',
