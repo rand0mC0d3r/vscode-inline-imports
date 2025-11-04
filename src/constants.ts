@@ -13,12 +13,43 @@ export const ALIASES = {
   '@modules/': 'modules',
 };
 
+export const BADGES = {
+  1: '1️⃣',
+  2: '2️⃣',
+  3: '3️⃣',
+  4: '4️⃣',
+  5: '5️⃣',
+  6: '6️⃣',
+  7: '7️⃣',
+  8: '8️⃣',
+  9: '9️⃣',
+  10: '🔟'
+};
+
 export const SKIPPED_PACKAGES = [
   'react',
+  'react-leaflet',
+  'crypto-js/md5',
+  'localforage',
+  '@mui/material',
+  'react-resizable-panels',
+  'react-intersection-observer',
+  'js-base64',
+  '@iconify/react',
+  "@emotion/react",
+  'react-dom/client',
+  '@turf/area',
+  'immer',
+  '@mui/x-charts',
   'react-dom',
+  'reselect',
+  '@vercel/speed-insights/react',
   'lodash',
+  'color',
+  '@react-oauth/google',
   'axios',
   'mobx',
+  '@tanstack/react-virtual',
   'mobx-react',
   'redux',
   'react-redux',

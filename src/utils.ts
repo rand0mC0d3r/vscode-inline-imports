@@ -1,9 +1,8 @@
 import * as fs from 'fs';
-import pLimit from 'p-limit';
 import * as path from 'path';
 import { Project, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
-import { ALIASES, EXTENSIONS, INPUT_ROOT_FOLDER } from './constants';
+import { ALIASES, BADGES, EXTENSIONS, INPUT_ROOT_FOLDER, SKIPPED_PACKAGES } from './constants';
 
 // ---- helper: resolve candidate file ----
 export async function tryResolve(base: string): Promise<string | null> {
@@ -50,7 +49,6 @@ async function resolveAliasMap(spec: string, workspaceRoot: string) {
     if (!spec.startsWith(prefix)) {continue;}
     const aliasTarget = path.resolve(workspaceRoot, 'src', folder, spec.replace(new RegExp(`^${prefix}`), ''));
     const resolved = await tryResolve(aliasTarget) || await tryResolve(path.join(aliasTarget, 'index'));
-    console.log('Resolved alias map:', resolved);
     if (resolved) {return resolved;}
   }
   return null;
@@ -63,7 +61,6 @@ async function resolveAtAlias(spec: string, workspaceRoot: string, baseUrl: stri
   ];
   for (const t of targets) {
     const resolved = await tryResolve(t) || await tryResolve(path.join(t, 'index'));
-    console.log('Resolved @ alias:', resolved);
     if (resolved) {return resolved;}
   }
   return null;
@@ -72,7 +69,6 @@ async function resolveAtAlias(spec: string, workspaceRoot: string, baseUrl: stri
 async function resolveRelative(spec: string, fromFsPath: string) {
   if (!spec.startsWith('.')) {return null;}
   const candidate = path.resolve(path.dirname(fromFsPath), spec);
-  console.log('Resolved relative import:', candidate);
   return (await tryResolve(candidate)) || (await tryResolve(path.join(candidate, 'index')));
 }
 
@@ -89,6 +85,10 @@ export async function resolveImportAbsolute(fromFsPath: string, spec: string): P
 
   const pathsMap = tsconfig?.compilerOptions?.paths ?? {};
 
+  if(SKIPPED_PACKAGES.includes(spec)) {
+    return null;
+  }
+
   return (
     await resolveTsconfigAlias(spec, baseUrl, pathsMap) ||
     await resolveAtAlias(spec, workspaceRoot, baseUrl) ||
@@ -99,7 +99,10 @@ export async function resolveImportAbsolute(fromFsPath: string, spec: string): P
 }
 
 async function getAllSourceFiles(): Promise<vscode.Uri[]> {
+  const t0 = performance.now();
   const uris = await vscode.workspace.findFiles(`${INPUT_ROOT_FOLDER}**/*.{ts,tsx,js,jsx}`, '**/node_modules/**');
+  const t1 = performance.now();
+  console.log(`⏱️ Found ${uris.length} source files in ${(t1 - t0).toFixed(2)} ms`);
   return uris;
 }
 
@@ -149,22 +152,18 @@ export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, 
   });
 
   const files = await getAllSourceFiles();
-  console.log(`📂 Found ${files.length} files. Starting import sniff...`);
 
-  const limit = pLimit(8); // run up to 8 analyses concurrently
+  const t0 = performance.now();
+  for (const uri of files) {
+    try {
+      await analyzeFile(uri, project, referenceMap);
+    } catch (err) {
+      console.error('💥 Error scanning file', uri.fsPath, err);
+    }
+  }
 
-  const tasks = files.map(uri =>
-    limit(async () => {
-      try {
-        await analyzeFile(uri, project, referenceMap);
-      } catch (err) {
-        console.error('💥 Error scanning file', uri.fsPath, err);
-      }
-    })
-  );
-
-  await Promise.all(tasks);
-
+  const t1 = performance.now();
+  console.log(`⏱️ Scanned ${files.length} files in ${(t1 - t0).toFixed(2)} ms`);
   console.log('🎉 Scan complete! All imports mapped.');
   emitter.fire([...referenceMap.keys()].map(f => vscode.Uri.file(f)));
 }
@@ -179,9 +178,11 @@ export function createDecorationProvider(referenceMap: Map<string, number>, emit
       const count = referenceMap.get(uri.fsPath);
 
       if (count) {
+        const badge = BADGES[count as keyof typeof BADGES] || `${count}👀`;
+        const tooltip = `${count} files import this module`;
         return {
-          badge: `${count}👀`,
-          tooltip: `${count} files import this module`,
+          badge,
+          tooltip,
           color: undefined,
         };
       }
