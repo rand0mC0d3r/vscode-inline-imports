@@ -10,9 +10,11 @@ async function tryResolve(base: string): Promise<string | null> {
     const full = base.endsWith(ext) ? base : base + ext;
     try {
       await vscode.workspace.fs.stat(vscode.Uri.file(full));
+      console.log(`Found file: ${full}`);
       return full;
     } catch { /* keep trying */ }
   }
+  console.log(`File not found: ${base} (tried with extensions: ${exts.join(', ')})`);
   return null;
 }
 
@@ -36,36 +38,67 @@ async function resolveImportAbsolute(fromFsPath: string, spec: string): Promise<
 
   const pathsMap: Record<string, string[]> = tsconfig?.compilerOptions?.paths ?? {};
 
-  // @/... alias
-  if (spec.startsWith('@/')) {
-    const aliasTarget = path.resolve(baseUrl, spec.replace(/^@\//, ''));
-    let resolved = await tryResolve(aliasTarget);
-    if (!resolved) {resolved = await tryResolve(path.join(aliasTarget, 'index'));}
-    if (resolved) {return resolved;}
-  }
-
-  // Custom tsconfig paths like "components/*": ["src/components/*"]
   for (const [alias, targets] of Object.entries(pathsMap)) {
     const aliasPrefix = alias.replace(/\*$/, '');
     if (spec.startsWith(aliasPrefix)) {
       for (const target of targets) {
         const targetPrefix = target.replace(/\*$/, '');
-        const candidate = path.resolve(baseUrl, spec.replace(aliasPrefix, targetPrefix));
+        const remainder = spec.slice(aliasPrefix.length);
+        const candidate = path.resolve(baseUrl, targetPrefix + remainder);
         let resolved = await tryResolve(candidate);
         if (!resolved) {resolved = await tryResolve(path.join(candidate, 'index'));}
-        if (resolved) {return resolved;}
+        if (resolved) {
+          return resolved;
+        }
       }
     }
   }
 
-  // Relative imports
+  if (spec.startsWith('@/')) {
+    const srcTarget = path.resolve(workspaceRoot, 'src', spec.replace(/^@\//, ''));
+    const baseTarget = path.resolve(baseUrl, spec.replace(/^@\//, ''));
+
+    let resolved = await tryResolve(srcTarget);
+    if (!resolved) {resolved = await tryResolve(path.join(srcTarget, 'index'));}
+    if (resolved) {
+      return resolved;
+    }
+
+    resolved = await tryResolve(baseTarget);
+    if (!resolved) {resolved = await tryResolve(path.join(baseTarget, 'index'));}
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  if (spec.startsWith('@store/')) {
+    const aliasTarget = path.resolve(workspaceRoot, 'src', 'store', spec.replace(/^@store\//, ''));
+    let resolved = await tryResolve(aliasTarget);
+    if (!resolved) {resolved = await tryResolve(path.join(aliasTarget, 'index'));}
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  if (spec.startsWith('@components/')) {
+    const aliasTarget = path.resolve(workspaceRoot, 'src', 'components', spec.replace(/^@components\//, ''));
+    let resolved = await tryResolve(aliasTarget);
+    if (!resolved) {resolved = await tryResolve(path.join(aliasTarget, 'index'));}
+    if (resolved) {
+      return resolved;
+    }
+  }
+
   if (spec.startsWith('.')) {
     const candidate = path.resolve(path.dirname(fromFsPath), spec);
     let resolved = await tryResolve(candidate);
     if (!resolved) {resolved = await tryResolve(path.join(candidate, 'index'));}
-    if (resolved) {return resolved;}
+    if (resolved) {
+      return resolved;
+    }
   }
 
+  console.log(`Could not resolve: ${spec}`);
   return null;
 }
 
@@ -119,7 +152,9 @@ export function activate(context: vscode.ExtensionContext) {
         for (const imp of imports) {
           const spec = imp.getModuleSpecifierValue();
           const resolved = await resolveImportAbsolute(uri.fsPath, spec);
-          if (resolved) {referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);}
+          if (resolved) {referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);} else {
+            console.log(`Failed to resolve static import: ${spec} in ${uri.fsPath}`);
+          }
         }
 
         // Dynamic imports: import('...')
@@ -129,8 +164,9 @@ export function activate(context: vscode.ExtensionContext) {
           const arg = dyn.getArguments()[0]?.getText().replace(/['"`]/g, '');
           if (!arg) {continue;}
           const resolved = await resolveImportAbsolute(uri.fsPath, arg);
-          console.log(`Dynamic import in ${uri.fsPath}: ${arg} -> ${resolved}`);
-          if (resolved) {referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);}
+          if (resolved) {referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);} else {
+            console.log(`Failed to resolve dynamic import: ${arg} in ${uri.fsPath}`);
+          }
         }
       } catch (err) {
         console.error('Error scanning file', uri.fsPath, err);
