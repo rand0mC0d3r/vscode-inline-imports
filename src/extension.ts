@@ -112,9 +112,12 @@ export function activate(context: vscode.ExtensionContext) {
     onDidChangeFileDecorations: emitter.event,
     provideFileDecoration(uri) {
       const count = referenceMap.get(uri.fsPath);
-      if (!count) {return;}
+      if (!count) {
+        console.log(`!!!!!!!!!!!!!!!!!! No references for: ${uri.fsPath}`);
+        return;
+      }
       return {
-        badge: String(count),
+        badge: `${count || 0}i`,
         tooltip: `${count} imports reference this file`,
         color: new vscode.ThemeColor('charts.blue')
       };
