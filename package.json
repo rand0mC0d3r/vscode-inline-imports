@@ -41,6 +41,7 @@
     "test": "vscode-test"
   },
   "dependencies": {
+    "p-limit": "^7.2.0",
     "ts-morph": "^27.0.2"
   },
   "devDependencies": {

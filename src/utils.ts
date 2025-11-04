@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import pLimit from 'p-limit';
 import * as path from 'path';
 import { Project, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
@@ -150,13 +151,19 @@ export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, 
   const files = await getAllSourceFiles();
   console.log(`📂 Found ${files.length} files. Starting import sniff...`);
 
-  for (const uri of files) {
-    try {
-      await analyzeFile(uri, project, referenceMap);
-    } catch (err) {
-      console.error('💥 Error scanning file', uri.fsPath, err);
-    }
-  }
+  const limit = pLimit(8); // run up to 8 analyses concurrently
+
+  const tasks = files.map(uri =>
+    limit(async () => {
+      try {
+        await analyzeFile(uri, project, referenceMap);
+      } catch (err) {
+        console.error('💥 Error scanning file', uri.fsPath, err);
+      }
+    })
+  );
+
+  await Promise.all(tasks);
 
   console.log('🎉 Scan complete! All imports mapped.');
   emitter.fire([...referenceMap.keys()].map(f => vscode.Uri.file(f)));
