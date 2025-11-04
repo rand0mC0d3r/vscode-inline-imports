@@ -191,7 +191,7 @@ export function createDecorationProvider(referenceMap: Map<string, number>, emit
 
       const count = referenceMap.get(uri.fsPath);
 
-      if (count) {
+      if (!!count) {
         const badge = BADGES[count as keyof typeof BADGES] || `${count}👀`;
         const tooltip = `${count} files import this module`;
         return {
