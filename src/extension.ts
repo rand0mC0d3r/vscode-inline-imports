@@ -1,47 +1,76 @@
+import * as fs from 'fs';
 import * as path from 'path';
 import { Project } from 'ts-morph';
 import * as vscode from 'vscode';
+
+async function tryResolve(base: string): Promise<string | null> {
+  const exts = ['.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js', '/index.jsx'];
+  for (const ext of exts) {
+    const full = base.endsWith(ext) ? base : base + ext;
+    try {
+      await vscode.workspace.fs.stat(vscode.Uri.file(full));
+      return full;
+    } catch { /* keep trying */ }
+  }
+  return null;
+}
+
+async function resolveImportAbsolute(fromFsPath: string, spec: string): Promise<string | null> {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders) {return null;}
+  const workspaceRoot = workspaceFolders[0].uri.fsPath;
+
+  // Load tsconfig (if available)
+  let tsconfig: any = null;
+  const tsconfigPath = path.join(workspaceRoot, 'tsconfig.json');
+  if (fs.existsSync(tsconfigPath)) {
+    try {
+      tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf8'));
+    } catch { /* ignore parse errors */ }
+  }
+
+  // Extract aliases (e.g. "@/components/*": ["src/components/*"])
+  const baseUrl = tsconfig?.compilerOptions?.baseUrl
+    ? path.resolve(workspaceRoot, tsconfig.compilerOptions.baseUrl)
+    : workspaceRoot;
+
+  const pathsMap: Record<string, string[]> = tsconfig?.compilerOptions?.paths ?? {};
+
+  // Simple alias resolver for @/
+  if (spec.startsWith('@/')) {
+    const aliasTarget = path.resolve(baseUrl, spec.replace(/^@\//, ''));
+    const resolved = await tryResolve(aliasTarget);
+    if (resolved) {return resolved;}
+  }
+
+  // Check if spec matches any custom path alias from tsconfig
+  for (const [alias, targets] of Object.entries(pathsMap)) {
+    const aliasPrefix = alias.replace(/\*$/, '');
+    if (spec.startsWith(aliasPrefix)) {
+      for (const target of targets) {
+        const targetPrefix = target.replace(/\*$/, '');
+        const candidate = path.resolve(baseUrl, spec.replace(aliasPrefix, targetPrefix));
+        const resolved = await tryResolve(candidate);
+        if (resolved) {return resolved;}
+      }
+    }
+  }
+
+  // Fallback: relative import
+  if (spec.startsWith('.')) {
+    const candidate = path.resolve(path.dirname(fromFsPath), spec);
+    const resolved = await tryResolve(candidate);
+    if (resolved) {return resolved;}
+  }
+
+  return null;
+}
 
 export function activate(context: vscode.ExtensionContext) {
   vscode.window.showInformationMessage('vs-inline-imports is alive 🧠');
 
   const emitter = new vscode.EventEmitter<vscode.Uri[]>();
   const referenceMap = new Map<string, number>();
-
-  // helper to check file existence
-  async function fileExists(fsPath: string) {
-    try {
-      await vscode.workspace.fs.stat(vscode.Uri.file(fsPath));
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  async function resolveImportAbsolute(fromFsPath: string, spec: string) {
-    // only handle relative imports
-    if (!spec.startsWith('.')) {return null;}
-
-    const baseDir = path.dirname(fromFsPath);
-    const candidateBase = path.resolve(baseDir, spec);
-
-    const candidates = [
-      candidateBase,
-      `${candidateBase}.ts`,
-      `${candidateBase}.tsx`,
-      `${candidateBase}.js`,
-      `${candidateBase}.jsx`,
-      path.join(candidateBase, 'index.ts'),
-      path.join(candidateBase, 'index.tsx'),
-      path.join(candidateBase, 'index.js'),
-      path.join(candidateBase, 'index.jsx'),
-    ];
-
-    for (const c of candidates) {
-      if (await fileExists(c)) {return c;}
-    }
-    return null;
-  }
 
   const provider: vscode.FileDecorationProvider = {
     onDidChangeFileDecorations: emitter.event,
@@ -62,7 +91,6 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('🔍 Scanning workspace for imports...');
     referenceMap.clear();
 
-    // Create a lightweight project; don't resolve node_modules
     const project = new Project({
       compilerOptions: {
         allowJs: true,
@@ -74,7 +102,6 @@ export function activate(context: vscode.ExtensionContext) {
       skipAddingFilesFromTsConfig: true
     });
 
-    // pick the file globs you want
     const tsFiles = await vscode.workspace.findFiles('**/*.ts', '**/node_modules/**');
     const tsxFiles = await vscode.workspace.findFiles('**/*.tsx', '**/node_modules/**');
     const jsFiles = await vscode.workspace.findFiles('**/*.js', '**/node_modules/**');
