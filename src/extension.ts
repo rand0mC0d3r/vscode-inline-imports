@@ -96,21 +96,18 @@ export function activate(context: vscode.ExtensionContext) {
     referenceMap.clear();
 
     const project = new Project({
-      compilerOptions: {
-        allowJs: true,
-        checkJs: false,
-        jsx: 1,
-        moduleResolution: 2
-      },
+      compilerOptions: { allowJs: true, checkJs: false, jsx: 1, moduleResolution: 2 },
       skipFileDependencyResolution: true,
       skipAddingFilesFromTsConfig: true
     });
 
-    const tsFiles = await vscode.workspace.findFiles('**/*.ts', '**/node_modules/**');
-    const tsxFiles = await vscode.workspace.findFiles('**/*.tsx', '**/node_modules/**');
-    const jsFiles = await vscode.workspace.findFiles('**/*.js', '**/node_modules/**');
-    const jsxFiles = await vscode.workspace.findFiles('**/*.jsx', '**/node_modules/**');
-    const files = [...tsFiles, ...tsxFiles, ...jsFiles, ...jsxFiles];
+    const filePatterns = ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'];
+    let files: vscode.Uri[] = [];
+    for (const pattern of filePatterns) {
+      const found = await vscode.workspace.findFiles('src/' + pattern, '**/node_modules/**');
+      files.push(...found);
+    }
+
     console.log(`Found ${files.length} files`);
 
     for (const uri of files) {
@@ -120,9 +117,8 @@ export function activate(context: vscode.ExtensionContext) {
       try {
         for (const imp of file.getImportDeclarations()) {
           const spec = imp.getModuleSpecifierValue();
-          if (!spec.startsWith('.') && !spec.startsWith('@/')) {continue;} // skip externals
           const resolved = await resolveImportAbsolute(uri.fsPath, spec);
-          console.log('Resolving', spec, '→', resolved);
+          console.log(`Import in ${uri.fsPath}: ${spec} -> ${resolved}`);
           if (resolved) {
             referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
           }
@@ -136,25 +132,15 @@ export function activate(context: vscode.ExtensionContext) {
     emitter.fire([...referenceMap.keys()].map(f => vscode.Uri.file(f)));
   }
 
-  // initial scan
-  scanWorkspace().then(() => {
-    // force first repaint
-    emitter.fire([...referenceMap.keys()].map(f => vscode.Uri.file(f)));
-  });
+  // Initial scan
+  scanWorkspace();
 
-  // rescan on save (throttled)
+  // Rescan on save (debounced)
   let scanTimeout: NodeJS.Timeout | undefined;
   vscode.workspace.onDidSaveTextDocument(() => {
     clearTimeout(scanTimeout);
     scanTimeout = setTimeout(scanWorkspace, 1500);
   });
-
-  // manual rescan command
-  const disposable = vscode.commands.registerCommand('vs-inline-imports.rescan', () => {
-    scanWorkspace();
-    vscode.window.showInformationMessage('Rescanning imports...');
-  });
-  context.subscriptions.push(disposable);
 }
 
 export function deactivate() {}
