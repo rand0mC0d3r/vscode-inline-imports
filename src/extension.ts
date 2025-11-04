@@ -47,11 +47,11 @@ export function activate(context: vscode.ExtensionContext) {
     onDidChangeFileDecorations: emitter.event,
     provideFileDecoration(uri) {
       const count = referenceMap.get(uri.fsPath);
-      // if (!count) {return;}
+      if (!count) {return;} // only show badge when we actually have a number
       return {
-        badge: `dd`,
-        // tooltip: `${count} imports reference this file`,
-        // color: new vscode.ThemeColor('charts.blue')
+        badge: String(count),
+        tooltip: `${count} imports reference this file`,
+        color: new vscode.ThemeColor('charts.blue')
       };
     }
   };
@@ -93,6 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
           if (!spec.startsWith('.')) {continue;} // skip externals
           const resolved = await resolveImportAbsolute(uri.fsPath, spec);
           if (resolved) {
+            console.log(`  ${uri.fsPath} -> ${resolved}`);
             referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
           }
         }
