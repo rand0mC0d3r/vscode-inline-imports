@@ -1,0 +1,16 @@
+
+export const EXTENSIONS = [
+  '.ts', '.tsx', '.js', '.jsx',
+  '/index.ts', '/index.tsx', '/index.js', '/index.jsx'
+];
+
+export const ALIASES = {
+  '@store/': 'store',
+  '@components/': 'components',
+  '@views/': 'views',
+  '@modules/': 'modules',
+};
+
+export const INPUT_FILE_PATTERNS = ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'];
+
+export const INPUT_ROOT_FOLDER = 'src/';

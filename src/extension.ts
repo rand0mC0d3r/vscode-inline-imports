@@ -1,10 +1,7 @@
 import { Project, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
+import { INPUT_FILE_PATTERNS, INPUT_ROOT_FOLDER } from './constants';
 import { resolveImportAbsolute } from './utils';
-
-const inputFilePatterns = ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'];
-const inputRootFolder = 'src/';
-
 
 export function activate(context: vscode.ExtensionContext) {
   vscode.window.showInformationMessage('vs-inline-imports is alive 🧠');
@@ -46,8 +43,8 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     let files: vscode.Uri[] = [];
-    for (const pattern of inputFilePatterns) {
-      const found = await vscode.workspace.findFiles(inputRootFolder + pattern, '**/node_modules/**');
+    for (const pattern of INPUT_FILE_PATTERNS) {
+      const found = await vscode.workspace.findFiles(INPUT_ROOT_FOLDER + pattern, '**/node_modules/**');
       files.push(...found);
     }
 

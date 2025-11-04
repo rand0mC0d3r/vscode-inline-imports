@@ -1,21 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-
-const inputFilePatterns = ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'];
-const inputRootFolder = 'src/';
-
-const EXTENSIONS = [
-  '.ts', '.tsx', '.js', '.jsx',
-  '/index.ts', '/index.tsx', '/index.js', '/index.jsx'
-];
-
-const ALIASES = {
-  '@store/': 'store',
-  '@components/': 'components',
-  '@views/': 'views',
-  '@modules/': 'modules',
-};
+import { ALIASES, EXTENSIONS } from './constants';
 
 // ---- helper: resolve candidate file ----
 export async function tryResolve(base: string): Promise<string | null> {
