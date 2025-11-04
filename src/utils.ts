@@ -122,6 +122,11 @@ async function analyzeFile(uri: vscode.Uri, project: Project, referenceMap: Map<
   // Static imports
   for (const imp of file.getImportDeclarations()) {
     const spec = imp.getModuleSpecifierValue();
+
+    if(SKIPPED_PACKAGES.includes(spec)) {
+      continue;
+    }
+
     record(await resolveImportAbsolute(uri.fsPath, spec), 'static import', spec);
   }
 
@@ -132,6 +137,11 @@ async function analyzeFile(uri: vscode.Uri, project: Project, referenceMap: Map<
 
   for (const dyn of dynamicImports) {
     const arg = dyn.getArguments()[0]?.getText().replace(/['"`]/g, '');
+
+    if(SKIPPED_PACKAGES.includes(arg)) {
+      continue;
+    }
+
     if (arg) {record(await resolveImportAbsolute(uri.fsPath, arg), 'dynamic import', arg);}
   }
 }
