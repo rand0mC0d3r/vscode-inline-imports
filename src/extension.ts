@@ -3,8 +3,6 @@ import * as path from 'path';
 import { Project, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
 
-const debug = false;
-
 // Try adding extensions and index fallbacks
 async function tryResolve(base: string): Promise<string | null> {
   const exts = ['.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js', '/index.jsx'];
@@ -12,7 +10,6 @@ async function tryResolve(base: string): Promise<string | null> {
     const full = base.endsWith(ext) ? base : base + ext;
     try {
       await vscode.workspace.fs.stat(vscode.Uri.file(full));
-      // console.log(`Found file: ${full}`);
       return full;
     } catch { /* keep trying */ }
   }
@@ -137,11 +134,6 @@ export function activate(context: vscode.ExtensionContext) {
       if (!['.ts', '.tsx', '.js', '.jsx'].some(ext => uri.fsPath.endsWith(ext))) {
         return;
       }
-      // if(uri.)
-      // if (!count) {
-      //   console.log(`!!!!!!!!!!!!!!!!!! No references for: ${uri.fsPath}`);
-      //   return;
-      // }
       return {
         badge: `${count || 0}i`,
         tooltip: `${count} ${uri.fsPath} imports reference this file`,
