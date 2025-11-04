@@ -170,10 +170,19 @@ export function createDecorationProvider(referenceMap: Map<string, number>, emit
     provideFileDecoration(uri) {
       if (referenceMap.size === 0 || !validExt.some(ext => uri.fsPath.endsWith(ext))) {return;}
       const count = referenceMap.get(uri.fsPath);
+
+      if (count) {
+        return {
+          badge: `${count}👀`,
+          tooltip: `${count} files import this module`,
+          color: undefined,
+        };
+      }
+
       return {
-        badge: count ? `${count}👀` : '🗑️',
-        tooltip: `${count ?? 0} files import this module`,
-        color: count ? undefined : new vscode.ThemeColor('charts.red'),
+        badge: '🗑️',
+        tooltip: 'No files import this module',
+        color: new vscode.ThemeColor('charts.red'),
       };
     },
   };
