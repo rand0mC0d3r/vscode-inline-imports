@@ -132,14 +132,20 @@ export function activate(context: vscode.ExtensionContext) {
     onDidChangeFileDecorations: emitter.event,
     provideFileDecoration(uri) {
       const count = referenceMap.get(uri.fsPath);
+
+      // return if folder
+      if (!['.ts', '.tsx', '.js', '.jsx'].some(ext => uri.fsPath.endsWith(ext))) {
+        return;
+      }
+      // if(uri.)
       // if (!count) {
       //   console.log(`!!!!!!!!!!!!!!!!!! No references for: ${uri.fsPath}`);
       //   return;
       // }
       return {
         badge: `${count || 0}i`,
-        tooltip: `${count} imports reference this file`,
-        color: (count && count > 0) ? new vscode.ThemeColor('charts.blue') : undefined
+        tooltip: `${count} ${uri.fsPath} imports reference this file`,
+        color: !!count ? undefined : new vscode.ThemeColor('charts.red')
       };
     }
   };
