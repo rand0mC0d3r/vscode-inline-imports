@@ -3,102 +3,117 @@ import * as vscode from 'vscode';
 import { INPUT_FILE_PATTERNS, INPUT_ROOT_FOLDER } from './constants';
 import { resolveImportAbsolute } from './utils';
 
+// ──────────────────────────────────────────────────────────────
+// 🧩 Helpers
+// ──────────────────────────────────────────────────────────────
+
+async function getAllSourceFiles(): Promise<vscode.Uri[]> {
+  const files: vscode.Uri[] = [];
+  for (const pattern of INPUT_FILE_PATTERNS) {
+    const found = await vscode.workspace.findFiles(
+      INPUT_ROOT_FOLDER + pattern,
+      '**/node_modules/**'
+    );
+    files.push(...found);
+  }
+  return files;
+}
+
+async function analyzeFile(uri: vscode.Uri, project: Project, referenceMap: Map<string, number>) {
+  const file = project.addSourceFileAtPathIfExists(uri.fsPath);
+  if (!file) {return;}
+
+  const record = (resolved: string | null, type: string, spec: string) => {
+    if (resolved) {
+      referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
+      console.log(`✅ ${type}: ${spec} -> ${resolved}`);
+    } else {
+      console.log(`❌ ${type} failed: ${spec}`);
+    }
+  };
+
+  // Static imports
+  for (const imp of file.getImportDeclarations()) {
+    const spec = imp.getModuleSpecifierValue();
+    record(await resolveImportAbsolute(uri.fsPath, spec), 'static import', spec);
+  }
+
+  // Dynamic imports
+  const dynamicImports = file
+    .getDescendantsOfKind(SyntaxKind.CallExpression)
+    .filter(n => n.getExpression().getText() === 'import');
+
+  for (const dyn of dynamicImports) {
+    const arg = dyn.getArguments()[0]?.getText().replace(/['"`]/g, '');
+    if (arg) {record(await resolveImportAbsolute(uri.fsPath, arg), 'dynamic import', arg);}
+  }
+}
+
+async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, referenceMap: Map<string, number>) {
+  console.log('🔍 Scanning workspace for imports...');
+  referenceMap.clear();
+
+  const project = new Project({
+    compilerOptions: { allowJs: true, checkJs: false, jsx: 1, moduleResolution: 2 },
+    skipFileDependencyResolution: true,
+    skipAddingFilesFromTsConfig: true,
+  });
+
+  const files = await getAllSourceFiles();
+  console.log(`📂 Found ${files.length} files. Starting import sniff...`);
+
+  for (const uri of files) {
+    try {
+      await analyzeFile(uri, project, referenceMap);
+    } catch (err) {
+      console.error('💥 Error scanning file', uri.fsPath, err);
+    }
+  }
+
+  console.log('🎉 Scan complete! All imports mapped.');
+  emitter.fire([...referenceMap.keys()].map(f => vscode.Uri.file(f)));
+}
+
+function createDecorationProvider(referenceMap: Map<string, number>, emitter: vscode.EventEmitter<vscode.Uri[]>) {
+  const validExt = ['.ts', '.tsx', '.js', '.jsx'];
+
+  const provider: vscode.FileDecorationProvider = {
+    onDidChangeFileDecorations: emitter.event,
+    provideFileDecoration(uri) {
+      if (referenceMap.size === 0 || !validExt.some(ext => uri.fsPath.endsWith(ext))) {return;}
+      const count = referenceMap.get(uri.fsPath);
+      return {
+        badge: count ? `${count}👀` : '🗑️',
+        tooltip: `${count ?? 0} files import this module`,
+        color: count ? undefined : new vscode.ThemeColor('charts.red'),
+      };
+    },
+  };
+
+  return provider;
+}
+
+// ──────────────────────────────────────────────────────────────
+// 🚀 Entry points
+// ──────────────────────────────────────────────────────────────
+
 export function activate(context: vscode.ExtensionContext) {
   vscode.window.showInformationMessage('vs-inline-imports is alive 🧠');
 
   const emitter = new vscode.EventEmitter<vscode.Uri[]>();
   const referenceMap = new Map<string, number>();
 
-  const provider: vscode.FileDecorationProvider = {
-    onDidChangeFileDecorations: emitter.event,
-    provideFileDecoration(uri) {
-      const count = referenceMap.get(uri.fsPath);
-
-      if (referenceMap.size === 0) {
-        return;
-      }
-
-      if (!['.ts', '.tsx', '.js', '.jsx'].some(ext => uri.fsPath.endsWith(ext))) {
-        return;
-      }
-
-      return {
-        badge: !!count ?  `${count || 0}👀` : '🗑️',
-        tooltip: `${count} ${uri.fsPath} imports reference this file`,
-        color: !!count ? undefined : new vscode.ThemeColor('charts.red')
-      };
-    }
-  };
-
+  const provider = createDecorationProvider(referenceMap, emitter);
   context.subscriptions.push(vscode.window.registerFileDecorationProvider(provider));
 
-  async function scanWorkspace() {
-    console.log('🔍 Scanning workspace for imports...');
-    referenceMap.clear();
+  // initial scan
+  scanWorkspace(emitter, referenceMap);
 
-    const project = new Project({
-      compilerOptions: { allowJs: true, checkJs: false, jsx: 1, moduleResolution: 2 },
-      skipFileDependencyResolution: true,
-      skipAddingFilesFromTsConfig: true
-    });
-
-    let files: vscode.Uri[] = [];
-    for (const pattern of INPUT_FILE_PATTERNS) {
-      const found = await vscode.workspace.findFiles(INPUT_ROOT_FOLDER + pattern, '**/node_modules/**');
-      files.push(...found);
-    }
-
-    console.log(`📂 Found ${files.length} files! Ready to sniff imports... 🕵️‍♂️`);
-
-    for (const uri of files) {
-      const file = project.addSourceFileAtPathIfExists(uri.fsPath);
-      if (!file) {continue;}
-
-      try {
-        // Static imports and import type
-        const imports = file.getImportDeclarations();
-        for (const imp of imports) {
-          const spec = imp.getModuleSpecifierValue();
-          const resolved = await resolveImportAbsolute(uri.fsPath, spec);
-          if (resolved) {
-            console.log(`   ✅ Static import: ${spec} -> ${resolved} in ${uri.fsPath}`);
-            referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
-          } else {
-            console.log(`   ❌ Failed static import: ${spec} in ${uri.fsPath}`);
-          }
-        }
-
-        // Dynamic imports: import('...')
-        const dynamicImports = file.getDescendantsOfKind(SyntaxKind.CallExpression)
-          .filter(node => node.getExpression().getText() === 'import');
-        for (const dyn of dynamicImports) {
-          const arg = dyn.getArguments()[0]?.getText().replace(/['"`]/g, '');
-          if (!arg) {continue;}
-          const resolved = await resolveImportAbsolute(uri.fsPath, arg);
-          if (resolved) {
-            console.log(`   ⚡ Dynamic import: ${arg} -> ${resolved} in ${uri.fsPath}`);
-            referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
-          } else {
-            console.log(`   ❌ Failed dynamic import: ${arg} in ${uri.fsPath}`);
-          }
-        }
-      } catch (err) {
-        console.error('Error scanning file', uri.fsPath, err);
-      }
-    }
-
-    console.log('🎉 Scan complete! All imports mapped. 🚀');
-    emitter.fire([...referenceMap.keys()].map(f => vscode.Uri.file(f)));
-  }
-
-  // Initial scan
-  scanWorkspace();
-
-  // Rescan on save (debounced)
-  let scanTimeout: NodeJS.Timeout | undefined;
+  // rescan on save (debounced)
+  let timeout: NodeJS.Timeout;
   vscode.workspace.onDidSaveTextDocument(() => {
-    clearTimeout(scanTimeout);
-    scanTimeout = setTimeout(scanWorkspace, 1500);
+    clearTimeout(timeout);
+    timeout = setTimeout(() => scanWorkspace(emitter, referenceMap), 1500);
   });
 }
 
