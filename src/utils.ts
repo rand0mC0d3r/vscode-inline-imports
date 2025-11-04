@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Project, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
-import { ALIASES, EXTENSIONS, INPUT_FILE_PATTERNS, INPUT_ROOT_FOLDER } from './constants';
+import { ALIASES, EXTENSIONS, INPUT_ROOT_FOLDER } from './constants';
 
 // ---- helper: resolve candidate file ----
 export async function tryResolve(base: string): Promise<string | null> {
@@ -93,20 +93,17 @@ export async function resolveImportAbsolute(fromFsPath: string, spec: string): P
     await resolveAtAlias(spec, workspaceRoot, baseUrl) ||
     await resolveAliasMap(spec, workspaceRoot) ||
     await resolveRelative(spec, fromFsPath) ||
-    (console.warn(`⚠️ Could not resolve import: ${spec}`), null)
+    (console.warn(`⚠️ Could not resolve import: ${spec} ${baseUrl} ${pathsMap} ${workspaceRoot} ${fromFsPath}`), null)
   );
 }
 
 async function getAllSourceFiles(): Promise<vscode.Uri[]> {
-  const files: vscode.Uri[] = [];
-  for (const pattern of INPUT_FILE_PATTERNS) {
-    const found = await vscode.workspace.findFiles(
-      INPUT_ROOT_FOLDER + pattern,
-      '**/node_modules/**'
-    );
-    files.push(...found);
-  }
-  return files;
+  const uris = await vscode.workspace.findFiles(
+    `${INPUT_ROOT_FOLDER}**/*.{ts,tsx,js,jsx}`,
+    '**/node_modules/**'
+  );
+  console.log(`🔎 Found ${uris.length} files.`);
+  return uris;
 }
 
 async function analyzeFile(uri: vscode.Uri, project: Project, referenceMap: Map<string, number>) {

@@ -13,6 +13,21 @@ export const ALIASES = {
   '@modules/': 'modules',
 };
 
+export const SKIPPED_PACKAGES = [
+  'react',
+  'react-dom',
+  'lodash',
+  'axios',
+  'mobx',
+  'mobx-react',
+  'redux',
+  'react-redux',
+  'next',
+  'vue',
+  'vuex',
+  'svelte',
+];
+
 export const INPUT_FILE_PATTERNS = ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'];
 
 export const INPUT_ROOT_FOLDER = 'src/';
