@@ -73,39 +73,27 @@ async function resolveImportAbsolute(fromFsPath: string, spec: string): Promise<
     }
   }
 
-  if (spec.startsWith('@store/')) {
-    const aliasTarget = path.resolve(workspaceRoot, 'src', 'store', spec.replace(/^@store\//, ''));
-    let resolved = await tryResolve(aliasTarget);
-    if (!resolved) {resolved = await tryResolve(path.join(aliasTarget, 'index'));}
-    if (resolved) {
-      return resolved;
-    }
-  }
+  const aliasMap = {
+    '@store/': 'store',
+    '@components/': 'components',
+    '@views/': 'views',
+    '@modules/': 'modules',
+  };
 
-  if (spec.startsWith('@components/')) {
-    const aliasTarget = path.resolve(workspaceRoot, 'src', 'components', spec.replace(/^@components\//, ''));
-    let resolved = await tryResolve(aliasTarget);
-    if (!resolved) {resolved = await tryResolve(path.join(aliasTarget, 'index'));}
-    if (resolved) {
-      return resolved;
-    }
-  }
+  for (const [prefix, folder] of Object.entries(aliasMap)) {
+    if (spec.startsWith(prefix)) {
+      const aliasTarget = path.resolve(
+        workspaceRoot,
+        'src',
+        folder,
+        spec.replace(new RegExp(`^${prefix}`), '')
+      );
 
-  if (spec.startsWith('@views/')) {
-    const aliasTarget = path.resolve(workspaceRoot, 'src', 'views', spec.replace(/^@views\//, ''));
-    let resolved = await tryResolve(aliasTarget);
-    if (!resolved) {resolved = await tryResolve(path.join(aliasTarget, 'index'));}
-    if (resolved) {
-      return resolved;
-    }
-  }
+      let resolved = await tryResolve(aliasTarget);
+      if (!resolved)
+        {resolved = await tryResolve(path.join(aliasTarget, 'index'));}
 
-  if (spec.startsWith('@modules/')) {
-    const aliasTarget = path.resolve(workspaceRoot, 'src', 'modules', spec.replace(/^@modules\//, ''));
-    let resolved = await tryResolve(aliasTarget);
-    if (!resolved) {resolved = await tryResolve(path.join(aliasTarget, 'index'));}
-    if (resolved) {
-      return resolved;
+      if (resolved) {return resolved;}
     }
   }
 
