@@ -3,6 +3,9 @@ import * as path from 'path';
 import { Project, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
 
+const inputFilePatterns = ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'];
+const inputRootFolder = 'src/';
+
 // Try adding extensions and index fallbacks
 async function tryResolve(base: string): Promise<string | null> {
   const exts = ['.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js', '/index.jsx'];
@@ -135,7 +138,7 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
       return {
-        badge: `${count || 0}i`,
+        badge: !!count ?  `${count || 0}i` : '🗑️',
         tooltip: `${count} ${uri.fsPath} imports reference this file`,
         color: !!count ? undefined : new vscode.ThemeColor('charts.red')
       };
@@ -154,14 +157,13 @@ export function activate(context: vscode.ExtensionContext) {
       skipAddingFilesFromTsConfig: true
     });
 
-    const filePatterns = ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'];
     let files: vscode.Uri[] = [];
-    for (const pattern of filePatterns) {
-      const found = await vscode.workspace.findFiles('src/' + pattern, '**/node_modules/**');
+    for (const pattern of inputFilePatterns) {
+      const found = await vscode.workspace.findFiles(inputRootFolder + pattern, '**/node_modules/**');
       files.push(...found);
     }
 
-    console.log(`Found ${files.length} files`);
+    console.log(`📂 Found ${files.length} files! Ready to sniff imports... 🕵️‍♂️`);
 
     for (const uri of files) {
       const file = project.addSourceFileAtPathIfExists(uri.fsPath);
@@ -173,8 +175,11 @@ export function activate(context: vscode.ExtensionContext) {
         for (const imp of imports) {
           const spec = imp.getModuleSpecifierValue();
           const resolved = await resolveImportAbsolute(uri.fsPath, spec);
-          if (resolved) {referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);} else {
-            console.log(`Failed to resolve static import: ${spec} in ${uri.fsPath}`);
+          if (resolved) {
+            console.log(`✅ Static import: ${spec} -> ${resolved} in ${uri.fsPath}`);
+            referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
+          } else {
+            console.log(`❌ Failed static import: ${spec} in ${uri.fsPath}`);
           }
         }
 
@@ -194,7 +199,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }
 
-    console.log('✅ Scan complete.');
+    console.log('🎉 Scan complete! All imports mapped. 🚀');
     emitter.fire([...referenceMap.keys()].map(f => vscode.Uri.file(f)));
   }
 
