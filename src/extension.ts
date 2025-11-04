@@ -133,12 +133,16 @@ export function activate(context: vscode.ExtensionContext) {
     provideFileDecoration(uri) {
       const count = referenceMap.get(uri.fsPath);
 
-      // return if folder
+      if (referenceMap.size === 0) {
+        return;
+      }
+
       if (!['.ts', '.tsx', '.js', '.jsx'].some(ext => uri.fsPath.endsWith(ext))) {
         return;
       }
+
       return {
-        badge: !!count ?  `${count || 0}i` : '🗑️',
+        badge: !!count ?  `${count || 0}👀` : '🗑️',
         tooltip: `${count} ${uri.fsPath} imports reference this file`,
         color: !!count ? undefined : new vscode.ThemeColor('charts.red')
       };
