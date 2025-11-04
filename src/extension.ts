@@ -3,6 +3,8 @@ import * as path from 'path';
 import { Project, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
 
+const debug = false;
+
 // Try adding extensions and index fallbacks
 async function tryResolve(base: string): Promise<string | null> {
   const exts = ['.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js', '/index.jsx'];
@@ -10,7 +12,7 @@ async function tryResolve(base: string): Promise<string | null> {
     const full = base.endsWith(ext) ? base : base + ext;
     try {
       await vscode.workspace.fs.stat(vscode.Uri.file(full));
-      console.log(`Found file: ${full}`);
+      // console.log(`Found file: ${full}`);
       return full;
     } catch { /* keep trying */ }
   }
@@ -89,6 +91,24 @@ async function resolveImportAbsolute(fromFsPath: string, spec: string): Promise<
     }
   }
 
+  if (spec.startsWith('@views/')) {
+    const aliasTarget = path.resolve(workspaceRoot, 'src', 'views', spec.replace(/^@views\//, ''));
+    let resolved = await tryResolve(aliasTarget);
+    if (!resolved) {resolved = await tryResolve(path.join(aliasTarget, 'index'));}
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  if (spec.startsWith('@modules/')) {
+    const aliasTarget = path.resolve(workspaceRoot, 'src', 'modules', spec.replace(/^@modules\//, ''));
+    let resolved = await tryResolve(aliasTarget);
+    if (!resolved) {resolved = await tryResolve(path.join(aliasTarget, 'index'));}
+    if (resolved) {
+      return resolved;
+    }
+  }
+
   if (spec.startsWith('.')) {
     const candidate = path.resolve(path.dirname(fromFsPath), spec);
     let resolved = await tryResolve(candidate);
@@ -112,14 +132,14 @@ export function activate(context: vscode.ExtensionContext) {
     onDidChangeFileDecorations: emitter.event,
     provideFileDecoration(uri) {
       const count = referenceMap.get(uri.fsPath);
-      if (!count) {
-        console.log(`!!!!!!!!!!!!!!!!!! No references for: ${uri.fsPath}`);
-        return;
-      }
+      // if (!count) {
+      //   console.log(`!!!!!!!!!!!!!!!!!! No references for: ${uri.fsPath}`);
+      //   return;
+      // }
       return {
         badge: `${count || 0}i`,
         tooltip: `${count} imports reference this file`,
-        color: new vscode.ThemeColor('charts.blue')
+        color: (count && count > 0) ? new vscode.ThemeColor('charts.blue') : undefined
       };
     }
   };
