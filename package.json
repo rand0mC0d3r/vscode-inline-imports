@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/rand0mC0d3r/vscode-inline-imports"
   },
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.105.0"
   },
@@ -29,27 +29,27 @@
       }
     ],
     "configuration": {
-      "title": "Import Scanner",
+      "title": "Inline-Imports Configuration",
       "properties": {
-        "importScanner.batchSize": {
+        "inlineImports.batchSize": {
           "type": "number",
           "default": 25,
           "description": "Number of files to process per batch.",
           "scope": "resource"
         },
-        "importScanner.sourceFolder": {
+        "inlineImports.sourceFolder": {
           "type": "string",
           "default": "src",
           "description": "Source folder to scan for imports.",
           "scope": "resource"
         },
-        "importScanner.deleteIcon": {
+        "inlineImports.deleteIcon": {
           "type": "string",
           "default": "🗑️",
           "description": "Icon to use for files proposed for deletion.",
           "scope": "resource"
         },
-        "importScanner.fileExtensions": {
+        "inlineImports.fileExtensions": {
           "type": "array",
           "default": [".ts", ".tsx", ".js", ".jsx"],
           "description": "File extensions to include in the import scanning. Default: .ts, .tsx, .js, .jsx",

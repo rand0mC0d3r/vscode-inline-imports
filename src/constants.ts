@@ -1,4 +1,7 @@
 
+export const PACKAGE_NAME = 'inlineImports';
+export const PACKAGE_JSON_NAME = 'vs-inline-imports';
+
 export const EXTENSIONS = [
   '/index.ts', '/index.tsx', '/index.js', '/index.jsx'
 ];

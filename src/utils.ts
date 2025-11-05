@@ -141,7 +141,15 @@ async function analyzeFile(file: SourceFile, referenceMap: Map<string, number>, 
   }
 }
 
-export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, referenceMap: Map<string, number>, config: vscode.WorkspaceConfiguration) {
+function updateStatusBar(referenceMap: Map<string, number>, status: vscode.StatusBarItem, totalFilesCount?: number) {
+  const used = referenceMap.size;
+  const allFiles = totalFilesCount || 0;
+  const unused = allFiles - used;
+  status.text = `📦 ${used} used / ${unused} unused`;
+  status.tooltip = `Scanned ${allFiles} total files.\nClick to rescan.`;
+}
+
+export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, referenceMap: Map<string, number>, config: vscode.WorkspaceConfiguration, status: vscode.StatusBarItem) {
   referenceMap.clear();
 
   const project = new Project({
@@ -181,6 +189,9 @@ export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, 
 
         processed += batch.length;
         const percent = Math.min((processed / total) * 100, 100);
+
+        updateStatusBar(referenceMap, status, total);
+
         progress.report({
           increment: (batch.length / total) * 100,
           message: `📂 ${processed}/${total} files (${percent.toFixed(1)}%)`,
