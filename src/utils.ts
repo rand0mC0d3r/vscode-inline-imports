@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Project, SyntaxKind } from 'ts-morph';
+import { Project, SourceFile, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
 import { ALIASES, BADGES, EXTENSIONS, INPUT_ROOT_FOLDER, SKIPPED_PACKAGES } from './constants';
 
@@ -106,9 +106,7 @@ async function getAllSourceFiles(): Promise<vscode.Uri[]> {
   return uris;
 }
 
-async function analyzeFile(uri: vscode.Uri, project: Project, referenceMap: Map<string, number>) {
-  const file = project.addSourceFileAtPathIfExists(uri.fsPath);
-  if (!file) {return;}
+async function analyzeFile(file: SourceFile, referenceMap: Map<string, number>) {
 
   const record = (resolved: string | null, type: string, spec: string) => {
     if (resolved) {
@@ -127,7 +125,7 @@ async function analyzeFile(uri: vscode.Uri, project: Project, referenceMap: Map<
       continue;
     }
 
-    record(await resolveImportAbsolute(uri.fsPath, spec), 'static import', spec);
+    record(await resolveImportAbsolute(file.getFilePath(), spec), 'static import', spec);
   }
 
   // Dynamic imports
@@ -142,7 +140,7 @@ async function analyzeFile(uri: vscode.Uri, project: Project, referenceMap: Map<
       continue;
     }
 
-    if (arg) {record(await resolveImportAbsolute(uri.fsPath, arg), 'dynamic import', arg);}
+    if (arg) {record(await resolveImportAbsolute(file.getFilePath(), arg), 'dynamic import', arg);}
   }
 }
 
@@ -161,20 +159,56 @@ export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, 
     skipAddingFilesFromTsConfig: true,
   });
 
-  const files = await getAllSourceFiles();
+  const uris = await getAllSourceFiles();
+  const files = uris.map(uri => project.addSourceFileAtPathIfExists(uri.fsPath)).filter(Boolean) as SourceFile[];
+  const batchSize = 20;
+  const total = files.length;
 
-  const t0 = performance.now();
-  for (const uri of files) {
-    try {
-      await analyzeFile(uri, project, referenceMap);
-    } catch (err) {
-      console.error('💥 Error scanning file', uri.fsPath, err);
+  // const t0 = performance.now();
+  // for (const uri of files) {
+  //   try {
+  //     await analyzeFile(uri, project, referenceMap);
+  //   } catch (err) {
+  //     console.error('💥 Error scanning file', uri.fsPath, err);
+  //   }
+  // }
+
+  // const t1 = performance.now();
+  // console.log(`⏱️ Scanned ${files.length} files in ${(t1 - t0).toFixed(2)} ms`);
+  // console.log('🎉 Scan complete! All imports mapped.');
+
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: '🔍 Scanning workspace for imports...',
+      cancellable: false,
+    },
+    async (progress) => {
+      const start = performance.now();
+      let processed = 0;
+
+      for (let i = 0; i < total; i += batchSize) {
+        const batch = files.slice(i, i + batchSize);
+
+        await Promise.all(
+          batch.map(f => analyzeFile(f, referenceMap).catch(err =>
+            console.error(`💥 Error scanning file: ${f.getFilePath()}`, err)
+          ))
+        );
+
+        processed += batch.length;
+        const percent = Math.min((processed / total) * 100, 100);
+        progress.report({
+          increment: (batch.length / total) * 100,
+          message: `📂 ${processed}/${total} files (${percent.toFixed(1)}%)`,
+        });
+      }
+
+      const duration = (performance.now() - start).toFixed(1);
+      vscode.window.showInformationMessage(`🎉 Scan complete! ${total} files analyzed in ${duration} ms`);
     }
-  }
+  );
 
-  const t1 = performance.now();
-  console.log(`⏱️ Scanned ${files.length} files in ${(t1 - t0).toFixed(2)} ms`);
-  console.log('🎉 Scan complete! All imports mapped.');
   emitter.fire([...referenceMap.keys()].map(f => vscode.Uri.file(f)));
 }
 

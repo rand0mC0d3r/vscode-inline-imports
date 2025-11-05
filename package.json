@@ -24,7 +24,24 @@
         "command": "vs-inline-imports.helloWorld",
         "title": "Hello World"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Import Scanner",
+      "properties": {
+        "importScanner.showProgressBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a progress notification while scanning workspace imports.",
+          "scope": "resource"
+        },
+        "importScanner.batchSize": {
+          "type": "number",
+          "default": 20,
+          "description": "Number of files to process per batch.",
+          "scope": "resource"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
