@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { ALIASES, BADGES, EXTENSIONS, SKIPPED_PACKAGES } from './constants';
 
 async function tryResolve(base: string, config: vscode.WorkspaceConfiguration): Promise<string | null> {
-  console.log(`🔗 Trying to resolve: ${base}`);
+  // console.log(`🔗 Trying to resolve: ${base}`);
   for (const ext of [...config.fileExtensions, ...EXTENSIONS]) {
     const full = base.endsWith(ext) ? base : base + ext;
     try {
@@ -110,7 +110,7 @@ async function analyzeFile(file: SourceFile, referenceMap: Map<string, number>, 
       referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
       // console.log(`✅ ${type}: ${spec} -> ${resolved.split('/src').pop()}`);
     } else {
-      console.log(`❌ ${type} failed: ${spec}`);
+      // console.log(`❌ ${type} failed: ${spec}`);
     }
   };
 
@@ -201,12 +201,19 @@ export function createDecorationProvider(referenceMap: Map<string, number>, emit
   const provider: vscode.FileDecorationProvider = {
     onDidChangeFileDecorations: emitter.event,
     provideFileDecoration(uri) {
-      if (referenceMap.size === 0 || !validExt.some(ext => uri.fsPath.endsWith(ext))) {return;}
+      if (referenceMap.size === 0 || !validExt.some((ext: any) => uri.fsPath.endsWith(ext))) {return;}
 
       // if outside /src/, skip
       if (!uri.fsPath.includes(path.sep + 'src' + path.sep)) {return;}
 
       const count = referenceMap.get(uri.fsPath);
+
+      if (count !== undefined) {
+        console.log(`🔍 Checking: ${uri.fsPath} -> ${count || 0} references`);
+      }
+      else {
+        console.log(`💥 Checking: ${uri.fsPath} -> not found in reference map`);
+      }
 
       if (!!count) {
         const badge = BADGES[count as keyof typeof BADGES] || `${count}👀`;
@@ -218,8 +225,10 @@ export function createDecorationProvider(referenceMap: Map<string, number>, emit
         };
       }
 
+      console.log(`🗑️ Marking for deletion: ${uri.fsPath}`);
+
       return {
-        badge: '🗑️',
+        badge: config.deleteIcon,
         tooltip: 'No files import this module',
         color: new vscode.ThemeColor('charts.red'),
       };
