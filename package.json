@@ -26,6 +26,10 @@
       {
         "command": "vs-inline-imports.reIndex",
         "title": "Inline-Imports: Reindex codebase"
+      },
+      {
+        "command": "vs-inline-imports.showActions",
+        "title": "Inline-Imports: Show Actions"
       }
     ],
     "configuration": {

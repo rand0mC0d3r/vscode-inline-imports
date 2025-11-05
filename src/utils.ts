@@ -248,3 +248,44 @@ export function createDecorationProvider(referenceMap: Map<string, number>, emit
 
   return provider;
 }
+
+// 🗑️ Show unused files in a quick pick and optionally open them
+export async function showUnusedFiles(
+  referenceMap: Map<string, number>,
+  config: vscode.WorkspaceConfiguration
+) {
+  const allFiles = await getAllSourceFiles(config);
+
+  // Filter files that are inside src, have a valid extension, and are not referenced
+  const unused = allFiles
+    .filter(uri => {
+      if (!uri.fsPath.includes(path.sep + 'src' + path.sep)) {return false;}
+      if (!config.fileExtensions.some((ext: string) => uri.fsPath.endsWith(ext))) {return false;}
+      return !referenceMap.has(uri.fsPath);
+    })
+    .sort((a, b) => a.fsPath.localeCompare(b.fsPath));
+
+  if (unused.length === 0) {
+    vscode.window.showInformationMessage('🎉 No unused files detected. Your project is spotless!');
+    return;
+  }
+
+  console.log(`🧹 Found ${unused.length} unused files`);
+  const items = unused.map(uri => ({
+    label: path.basename(uri.fsPath),
+    description: uri.fsPath.replace(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '', ''),
+    uri,
+  }));
+
+  const pick = await vscode.window.showQuickPick(items, {
+    placeHolder: `🗑️ ${unused.length} unused files — select one to open or Esc to dismiss`,
+    canPickMany: true,
+  });
+
+  if (pick && Array.isArray(pick) && pick.length > 0) {
+    for (const p of pick) {
+      const doc = await vscode.workspace.openTextDocument(p.uri);
+      await vscode.window.showTextDocument(doc, { preview: false });
+    }
+  }
+}
