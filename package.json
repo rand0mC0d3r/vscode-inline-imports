@@ -32,8 +32,20 @@
       "properties": {
         "importScanner.batchSize": {
           "type": "number",
-          "default": 20,
+          "default": 25,
           "description": "Number of files to process per batch.",
+          "scope": "resource"
+        },
+        "importScanner.sourceFolder": {
+          "type": "string",
+          "default": "src",
+          "description": "Source folder to scan for imports.",
+          "scope": "resource"
+        },
+        "importScanner.fileExtensions": {
+          "type": "array",
+          "default": [".ts", ".tsx", ".js", ".jsx"],
+          "description": "File extensions to include in the import scanning. Default: .ts, .tsx, .js, .jsx",
           "scope": "resource"
         }
       }

@@ -1,6 +1,5 @@
 
 export const EXTENSIONS = [
-  '.ts', '.tsx', '.js', '.jsx',
   '/index.ts', '/index.tsx', '/index.js', '/index.jsx'
 ];
 

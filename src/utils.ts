@@ -2,11 +2,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Project, SourceFile, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
-import { ALIASES, BADGES, EXTENSIONS, INPUT_ROOT_FOLDER, SKIPPED_PACKAGES } from './constants';
+import { ALIASES, BADGES, EXTENSIONS, SKIPPED_PACKAGES } from './constants';
 
-// ---- helper: resolve candidate file ----
-export async function tryResolve(base: string): Promise<string | null> {
-  for (const ext of EXTENSIONS) {
+async function tryResolve(base: string, config: vscode.WorkspaceConfiguration): Promise<string | null> {
+  console.log(`🔗 Trying to resolve: ${base}`);
+  for (const ext of [...config.fileExtensions, ...EXTENSIONS]) {
     const full = base.endsWith(ext) ? base : base + ext;
     try {
       await vscode.workspace.fs.stat(vscode.Uri.file(full));
@@ -16,7 +16,6 @@ export async function tryResolve(base: string): Promise<string | null> {
   return null;
 }
 
-// ---- helper: load tsconfig paths ----
 function loadTsconfig(workspaceRoot: string) {
   const tsconfigPath = path.join(workspaceRoot, 'tsconfig.json');
   if (!fs.existsSync(tsconfigPath)) {return null;}
@@ -27,8 +26,7 @@ function loadTsconfig(workspaceRoot: string) {
   }
 }
 
-// ---- resolver helpers ----
-async function resolveTsconfigAlias(spec: string, baseUrl: string, pathsMap: Record<string, string[]>) {
+async function resolveTsconfigAlias(spec: string, baseUrl: string, pathsMap: Record<string, string[]>, config: vscode.WorkspaceConfiguration) {
   for (const [alias, targets] of Object.entries(pathsMap)) {
     const aliasPrefix = alias.replace(/\*$/, '');
     if (!spec.startsWith(aliasPrefix)) {continue;}
@@ -37,43 +35,42 @@ async function resolveTsconfigAlias(spec: string, baseUrl: string, pathsMap: Rec
       const targetPrefix = target.replace(/\*$/, '');
       const remainder = spec.slice(aliasPrefix.length);
       const candidate = path.resolve(baseUrl, targetPrefix + remainder);
-      const resolved = await tryResolve(candidate) || await tryResolve(path.join(candidate, 'index'));
+      const resolved = await tryResolve(candidate, config) || await tryResolve(path.join(candidate, 'index'), config);
       if (resolved) {return resolved;}
     }
   }
   return null;
 }
 
-async function resolveAliasMap(spec: string, workspaceRoot: string) {
+async function resolveAliasMap(spec: string, workspaceRoot: string, config: vscode.WorkspaceConfiguration) {
   for (const [prefix, folder] of Object.entries(ALIASES)) {
     if (!spec.startsWith(prefix)) {continue;}
     const aliasTarget = path.resolve(workspaceRoot, 'src', folder, spec.replace(new RegExp(`^${prefix}`), ''));
-    const resolved = await tryResolve(aliasTarget) || await tryResolve(path.join(aliasTarget, 'index'));
+    const resolved = await tryResolve(aliasTarget, config) || await tryResolve(path.join(aliasTarget, 'index'), config);
     if (resolved) {return resolved;}
   }
   return null;
 }
 
-async function resolveAtAlias(spec: string, workspaceRoot: string, baseUrl: string) {
+async function resolveAtAlias(spec: string, workspaceRoot: string, baseUrl: string, config: vscode.WorkspaceConfiguration) {
   const targets = [
     path.resolve(workspaceRoot, 'src', spec.replace(/^@\//, '')),
     path.resolve(baseUrl, spec.replace(/^@\//, ''))
   ];
   for (const t of targets) {
-    const resolved = await tryResolve(t) || await tryResolve(path.join(t, 'index'));
+    const resolved = await tryResolve(t, config) || await tryResolve(path.join(t, 'index'), config);
     if (resolved) {return resolved;}
   }
   return null;
 }
 
-async function resolveRelative(spec: string, fromFsPath: string) {
+async function resolveRelative(spec: string, fromFsPath: string, config: vscode.WorkspaceConfiguration) {
   if (!spec.startsWith('.')) {return null;}
   const candidate = path.resolve(path.dirname(fromFsPath), spec);
-  return (await tryResolve(candidate)) || (await tryResolve(path.join(candidate, 'index')));
+  return (await tryResolve(candidate, config)) || (await tryResolve(path.join(candidate, 'index'), config));
 }
 
-// ---- main resolver ----
-export async function resolveImportAbsolute(fromFsPath: string, spec: string): Promise<string | null> {
+export async function resolveImportAbsolute(fromFsPath: string, spec: string, config: vscode.WorkspaceConfiguration): Promise<string | null> {
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders) {return null;}
 
@@ -90,23 +87,23 @@ export async function resolveImportAbsolute(fromFsPath: string, spec: string): P
   }
 
   return (
-    await resolveTsconfigAlias(spec, baseUrl, pathsMap) ||
-    await resolveAtAlias(spec, workspaceRoot, baseUrl) ||
-    await resolveAliasMap(spec, workspaceRoot) ||
-    await resolveRelative(spec, fromFsPath) ||
+    await resolveTsconfigAlias(spec, baseUrl, pathsMap, config) ||
+    await resolveAtAlias(spec, workspaceRoot, baseUrl, config) ||
+    await resolveAliasMap(spec, workspaceRoot, config) ||
+    await resolveRelative(spec, fromFsPath, config) ||
     (console.warn(`⚠️ Could not resolve import: ${spec} ${baseUrl} ${pathsMap} ${workspaceRoot} ${fromFsPath}`), null)
   );
 }
 
-async function getAllSourceFiles(): Promise<vscode.Uri[]> {
+async function getAllSourceFiles(config: vscode.WorkspaceConfiguration): Promise<vscode.Uri[]> {
   const t0 = performance.now();
-  const uris = await vscode.workspace.findFiles(`${INPUT_ROOT_FOLDER}**/*.{ts,tsx,js,jsx}`, '**/node_modules/**');
+  const uris = await vscode.workspace.findFiles(`${config.sourceFolder}/**/*.{ts,tsx,js,jsx}`, '**/node_modules/**');
   const t1 = performance.now();
   console.log(`⏱️ Found ${uris.length} source files in ${(t1 - t0).toFixed(2)} ms`);
   return uris;
 }
 
-async function analyzeFile(file: SourceFile, referenceMap: Map<string, number>) {
+async function analyzeFile(file: SourceFile, referenceMap: Map<string, number>, config: vscode.WorkspaceConfiguration) {
 
   const record = (resolved: string | null, type: string, spec: string) => {
     if (resolved) {
@@ -125,7 +122,7 @@ async function analyzeFile(file: SourceFile, referenceMap: Map<string, number>) 
       continue;
     }
 
-    record(await resolveImportAbsolute(file.getFilePath(), spec), 'static import', spec);
+    record(await resolveImportAbsolute(file.getFilePath(), spec, config), 'static import', spec);
   }
 
   // Dynamic imports
@@ -140,12 +137,11 @@ async function analyzeFile(file: SourceFile, referenceMap: Map<string, number>) 
       continue;
     }
 
-    if (arg) {record(await resolveImportAbsolute(file.getFilePath(), arg), 'dynamic import', arg);}
+    if (arg) {record(await resolveImportAbsolute(file.getFilePath(), arg, config), 'dynamic import', arg);}
   }
 }
 
-export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, referenceMap: Map<string, number>) {
-  console.log('🔍 Scanning workspace for imports...');
+export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, referenceMap: Map<string, number>, config: vscode.WorkspaceConfiguration) {
   referenceMap.clear();
 
   const project = new Project({
@@ -159,9 +155,9 @@ export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, 
     skipAddingFilesFromTsConfig: true,
   });
 
-  const uris = await getAllSourceFiles();
+  const uris = await getAllSourceFiles(config);
   const files = uris.map(uri => project.addSourceFileAtPathIfExists(uri.fsPath)).filter(Boolean) as SourceFile[];
-  const batchSize = 25;
+  const batchSize = config.batchSize || 50;
   const total = files.length;
 
   await vscode.window.withProgress(
@@ -178,7 +174,7 @@ export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, 
         const batch = files.slice(i, i + batchSize);
 
         await Promise.all(
-          batch.map(f => analyzeFile(f, referenceMap).catch(err =>
+          batch.map(f => analyzeFile(f, referenceMap, config).catch(err =>
             console.error(`💥 Error scanning file: ${f.getFilePath()}`, err)
           ))
         );
@@ -199,8 +195,8 @@ export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, 
   emitter.fire([...referenceMap.keys()].map(f => vscode.Uri.file(f)));
 }
 
-export function createDecorationProvider(referenceMap: Map<string, number>, emitter: vscode.EventEmitter<vscode.Uri[]>) {
-  const validExt = ['.ts', '.tsx', '.js', '.jsx'];
+export function createDecorationProvider(referenceMap: Map<string, number>, emitter: vscode.EventEmitter<vscode.Uri[]>, config: vscode.WorkspaceConfiguration): vscode.FileDecorationProvider {
+  const validExt = config.fileExtensions;
 
   const provider: vscode.FileDecorationProvider = {
     onDidChangeFileDecorations: emitter.event,
