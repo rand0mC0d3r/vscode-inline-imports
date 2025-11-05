@@ -161,21 +161,8 @@ export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, 
 
   const uris = await getAllSourceFiles();
   const files = uris.map(uri => project.addSourceFileAtPathIfExists(uri.fsPath)).filter(Boolean) as SourceFile[];
-  const batchSize = 20;
+  const batchSize = 25;
   const total = files.length;
-
-  // const t0 = performance.now();
-  // for (const uri of files) {
-  //   try {
-  //     await analyzeFile(uri, project, referenceMap);
-  //   } catch (err) {
-  //     console.error('💥 Error scanning file', uri.fsPath, err);
-  //   }
-  // }
-
-  // const t1 = performance.now();
-  // console.log(`⏱️ Scanned ${files.length} files in ${(t1 - t0).toFixed(2)} ms`);
-  // console.log('🎉 Scan complete! All imports mapped.');
 
   await vscode.window.withProgress(
     {

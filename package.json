@@ -21,19 +21,13 @@
   "contributes": {
     "commands": [
       {
-        "command": "vs-inline-imports.helloWorld",
-        "title": "Hello World"
+        "command": "vs-inline-imports.reIndex",
+        "title": "Inline-Imports: Reindex codebase"
       }
     ],
     "configuration": {
       "title": "Import Scanner",
       "properties": {
-        "importScanner.showProgressBar": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show a progress notification while scanning workspace imports.",
-          "scope": "resource"
-        },
         "importScanner.batchSize": {
           "type": "number",
           "default": 20,
