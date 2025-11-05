@@ -21,8 +21,6 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   context.subscriptions.push(reIndexCommand);
-
-
 }
 
 export function deactivate() {}

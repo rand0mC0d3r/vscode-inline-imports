@@ -17,6 +17,7 @@
     "onStartupFinished",
     "workspaceContains:**/*.{ts,tsx,js,jsx}"
   ],
+  "license": "MIT",
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -50,7 +51,8 @@
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test",
-    "vsix": "npm run compile && vsce package"
+    "vsix": "npm run compile && vsce package",
+    "publish": "vsce publish"
   },
   "dependencies": {
     "ts-morph": "^27.0.2"
