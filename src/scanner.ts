@@ -4,7 +4,7 @@ import { Node, Project, SourceFile, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
 import { SKIPPED_PACKAGES } from './constants';
 import { updateStatusBar } from './interfaceElements';
-import { resolveImportAbsolute } from './utils';
+import { resolveImportAbsolute, isFileIgnored } from './utils';
 
 // 🧠 persistent caches
 const fileHashCache = new Map<string, string>();
@@ -226,6 +226,13 @@ export async function scanWorkspace(
       vscode.window.showInformationMessage(`🎉 Scan complete! ${total} files analyzed in ${duration} ms`);
     }
   );
+
+  // Apply artificial count of 1 to ignored files that have count of 0
+  for (const [filePath, count] of referenceMap.entries()) {
+    if (count === 0 && isFileIgnored(filePath, config)) {
+      referenceMap.set(filePath, 1);
+    }
+  }
 
   // const duration = (performance.now() - start).toFixed(1);
   // status.text = `📊 ${total} files scanned in ${duration} ms`;

@@ -3,6 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ALIASES, EXTENSIONS, SKIPPED_PACKAGES } from './constants';
+import { minimatch } from 'minimatch';
 
 // 🧠 internal cache for resolved paths + tsconfig
 const resolveMemo = new Map<string, string | null>();
@@ -145,4 +146,33 @@ export async function resolveImportAbsolute(
 
   resolveMemo.set(cacheKey, resolved);
   return resolved;
+}
+
+/**
+ * Check if a file should be ignored based on the ignoredFiles configuration
+ * @param filePath Absolute file path
+ * @param config VS Code workspace configuration
+ * @returns true if the file should be ignored
+ */
+export function isFileIgnored(
+  filePath: string,
+  config: vscode.WorkspaceConfiguration
+): boolean {
+  const ignoredFiles: string[] = config.ignoredFiles || [];
+  const fileName = path.basename(filePath);
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
+  const relativePath = workspaceFolder ? path.relative(workspaceFolder, filePath) : filePath;
+
+  for (const pattern of ignoredFiles) {
+    // Check against filename
+    if (minimatch(fileName, pattern, { nocase: true })) {
+      return true;
+    }
+    // Check against relative path
+    if (minimatch(relativePath, pattern, { nocase: true })) {
+      return true;
+    }
+  }
+
+  return false;
 }
