@@ -11,7 +11,7 @@ export async function getUnusedFiles(
 
   return allFiles
     .filter(uri => {
-      if (!uri.fsPath.includes(path.sep + 'src' + path.sep)) {return false;}
+      if (!uri.fsPath.includes(`${path.sep}${config.sourceFolder}${path.sep}`)) {return false;}
       if (!config.fileExtensions.some((ext: string) => uri.fsPath.endsWith(ext))) {return false;}
       return referenceMap.get(uri.fsPath) === 0;
     })
@@ -109,7 +109,7 @@ export async function deleteAllUnusedFiles(
   
   const moreFiles = unused.length > 10 ? `\n  ...and ${unused.length - 10} more files` : '';
   
-  const confirmMessage = `Are you sure you want to delete ${unused.length} unused file${unused.length === 1 ? '' : 's'}?\n\n${fileList}${moreFiles}\n\nThis action cannot be undone.`;
+  const confirmMessage = `Are you sure you want to delete ${unused.length} unused file${unused.length === 1 ? '' : 's'}?\n\n${fileList}${moreFiles}\n\nFiles will be moved to trash and can be recovered.`;
 
   const choice = await vscode.window.showWarningMessage(
     confirmMessage,
