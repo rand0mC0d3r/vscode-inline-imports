@@ -46,7 +46,7 @@
       },
       {
         "command": "vs-inline-imports.showFileUsages",
-        "title": "Usages"
+        "title": "Show Inline Import Usages"
       }
     ],
     "menus": {
@@ -54,7 +54,7 @@
         {
           "command": "vs-inline-imports.showFileUsages",
           "when": "!explorerResourceIsFolder && resourceExtname =~ /\\.(ts|tsx|js|jsx)$/",
-          "group": "navigation@100"
+          "group": "inlineImports@0"
         }
       ]
     },
