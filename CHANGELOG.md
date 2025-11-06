@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.14...HEAD)
+## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.15...HEAD)
+
+## [v0.0.15](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.14...v0.0.15) - 2025-11-06
+
+### Commits
+
+- refactor: enhance alias definitions and move unused file logic to a new module [`533d859`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/533d859d3724d80be0641c56cee98992c9269e3d)
+- refactor: optimize source file handling and improve import detection logic [`28953c8`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/28953c8a5f20ce772b508e8093bfd0d99a2d0bbb)
+- chore: release new version [`209467a`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/209467ae2ae89106aee1704a86bdbf3f1b30d842)
+- refactor: remove unused path import and simplify file decoration logic [`bfbc318`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/bfbc3188243f80f4ed31df339cdae154180affe8)
+- refactor: remove unnecessary console log from analyzeFileFast function [`3904ee5`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/3904ee5206a8caf83585a6048429c582c49be145)
+- refactor: use config.sourceFolder for file path validation in createDecorationProvider [`0e04826`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/0e04826bb232140b61c2bcf661792c9830083c25)
+- refactor: remove debug log from createDecorationProvider function [`f4629f3`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/f4629f36db2e80b83c6daf7ed1f722d5e91cbf58)
 
 ## [v0.0.14](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.13...v0.0.14) - 2025-11-06
 
