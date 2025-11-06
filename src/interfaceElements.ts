@@ -1,18 +1,20 @@
 import * as vscode from 'vscode';
 import { PACKAGE_JSON_NAME } from './constants';
 import { scanWorkspace } from './scanner';
-import { showUnusedFiles } from './unusedFiles';
+import { deleteAllUnusedFiles, showUnusedFiles } from './unusedFiles';
 
 export function createActionsMenu(vscode: typeof import('vscode'), context: vscode.ExtensionContext, emitter: vscode.EventEmitter<vscode.Uri[]>, referenceMap: Map<string, number>, config: vscode.WorkspaceConfiguration, status: vscode.StatusBarItem) {
   const showActions = vscode.commands.registerCommand("vs-inline-imports.showActions", async () => {
     const choice = await vscode.window.showQuickPick([
       "🔍 Re-scan workspace",
       "📜 Show unused files",
+      "🗑️ Delete all unused files",
       "🚫 Clear decorations"
     ], { placeHolder: "What do you want to do?" });
 
     if (choice?.includes("Re-scan")) {await scanWorkspace(emitter, referenceMap, config, status);}
     else if (choice?.includes("Show unused")) {showUnusedFiles(referenceMap, config);}
+    else if (choice?.includes("Delete all unused")) {deleteAllUnusedFiles(referenceMap, config);}
     else if (choice?.includes("Clear")) {referenceMap.clear();}
   });
   context.subscriptions.push(showActions);
