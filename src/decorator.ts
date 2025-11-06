@@ -15,7 +15,7 @@ export function createDecorationProvider(
       if (
         referenceMap.size === 0
         || !config.fileExtensions.some((ext: string) => file.endsWith(ext))
-        || !file.includes(`${path.sep}src${path.sep}`)
+        || !file.includes(`${path.sep}${config.sourceFolder}${path.sep}`)
       ) {return;}
 
       const count = referenceMap.get(file);
