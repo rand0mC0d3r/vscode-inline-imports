@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.11...HEAD)
+## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.12...HEAD)
+
+## [v0.0.12](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.11...v0.0.12) - 2025-11-06
+
+### Commits
+
+- chore: release new version [`c4a7058`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/c4a70581caf05f4fdb2ca874a7dcbeac920e44b3)
+- chore: update GitHub token secret in release workflow [`a00c33a`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/a00c33a24e1ad7d6e6e5c148384a247aed554093)
 
 ## [v0.0.11](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.10...v0.0.11) - 2025-11-06
 
