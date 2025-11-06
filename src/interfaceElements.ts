@@ -29,7 +29,7 @@ export function createStatusBarItem(context: vscode.ExtensionContext) {
 }
 
 export function updateStatusBar(referenceMap: Map<string, number>, status: vscode.StatusBarItem, totalFilesCount?: number) {
-  const used = referenceMap.size;
+  const used = Array.from(referenceMap.values()).filter(count => count > 0).length;
   const allFiles = totalFilesCount || 0;
   const unused = allFiles - used;
   status.text = `$(file-code) ${used} used / ${unused} unused`;

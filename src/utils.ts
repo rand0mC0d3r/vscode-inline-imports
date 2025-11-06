@@ -5,6 +5,8 @@ import * as vscode from 'vscode';
 import { ALIASES, BADGES, EXTENSIONS, SKIPPED_PACKAGES } from './constants';
 import { updateStatusBar } from './interfaceElements';
 
+const resolveCache = new Map<string, string | null>();
+
 async function tryResolve(base: string, config: vscode.WorkspaceConfiguration): Promise<string | null> {
   // console.log(`🔗 Trying to resolve: ${base}`);
   for (const ext of [...config.fileExtensions, ...EXTENSIONS]) {
@@ -109,13 +111,20 @@ async function analyzeFile(file: SourceFile, referenceMap: Map<string, number>, 
   referenceMap.set(filePath, referenceMap.get(filePath) ?? 0);
 
   const record = async (spec?: string) => {
-    if (!spec || SKIPPED_PACKAGES.includes(spec)) {return;}
-    const resolved = await resolveImportAbsolute(filePath, spec, config);
+    if (!spec || SKIPPED_PACKAGES.includes(spec) || spec.startsWith('http')) {return;}
+
+    const key = `${path.dirname(filePath)}::${spec}`;
+    const cached = resolveCache.get(key);
+
+    const resolved = cached ?? (await resolveImportAbsolute(filePath, spec, config));
+    if (!cached) {resolveCache.set(key, resolved);}
+
     if (resolved) {referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);}
   };
 
   await Promise.all([
-    ...file.getImportDeclarations().map(i => record(i.getModuleSpecifierValue())),
+    ...file
+      .getImportDeclarations().map(i => record(i.getModuleSpecifierValue())),
     ...file
       .getDescendantsOfKind(SyntaxKind.CallExpression)
       .filter(n => n.getExpression().getText() === 'import')
@@ -228,7 +237,7 @@ export async function showUnusedFiles(
     .filter(uri => {
       if (!uri.fsPath.includes(path.sep + 'src' + path.sep)) {return false;}
       if (!config.fileExtensions.some((ext: string) => uri.fsPath.endsWith(ext))) {return false;}
-      return !referenceMap.has(uri.fsPath);
+      return referenceMap.get(uri.fsPath) === 0;
     })
     .sort((a, b) => a.fsPath.localeCompare(b.fsPath));
 
