@@ -43,8 +43,21 @@
       {
         "command": "vs-inline-imports.showActions",
         "title": "Inline-Imports: Show Actions"
+      },
+      {
+        "command": "vs-inline-imports.showFileUsages",
+        "title": "Usages"
       }
     ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "vs-inline-imports.showFileUsages",
+          "when": "!explorerResourceIsFolder && resourceExtname =~ /\\.(ts|tsx|js|jsx)$/",
+          "group": "navigation@100"
+        }
+      ]
+    },
     "configuration": {
       "title": "Inline-Imports Configuration",
       "properties": {
