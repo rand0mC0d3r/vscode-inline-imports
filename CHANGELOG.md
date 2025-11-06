@@ -5,7 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.15...HEAD)
+## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.16...HEAD)
+
+## [v0.0.16](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.15...v0.0.16) - 2025-11-06
+
+### Merged
+
+- Add explorer context menu to show file usages [`#2`](https://github.com/rand0mC0d3r/vscode-inline-imports/pull/2)
+
+### Commits
+
+- Add context menu for showing file usages [`e592d55`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/e592d55d0b347274bc44095fa3c4b1064c8a32c7)
+- Optimize file usages with reverse import map [`1583f88`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/1583f884a61c59683804f4c4a15fc2277bfdea2b)
+- Fix path handling and refactor for multi-root workspaces [`43e86bc`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/43e86bc952e84137aa2a3cdda29bd3e686fc12a2)
+- Update command title and menu group for inline import usages [`00d9892`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/00d989201d2fee05201d8247e000d6028e915db2)
+- Initial plan [`cc22ef2`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/cc22ef2e35ce5b864ea8b7d67ee36b083408e948)
+- chore: release new version [`8365d5b`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/8365d5b73b04bd596df25480b77baa63d88ddf8c)
 
 ## [v0.0.15](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.14...v0.0.15) - 2025-11-06
 
