@@ -6,13 +6,14 @@ It’s like knip, but visual. Interactive. And ✨ a little cheeky.
 ## 🚀 Features
 
 Feature	Description
-📦 Inline Import Counts	Shows how many other files reference each module directly in the Explorer
-🔄 Live Updates	Automatically rescans when you save files
-💥 Dynamic Imports	Supports both static import x from and dynamic import() syntax
-🎨 Visual Flair	Uses emojis and colored badges (configurable)
-🧠 Smarter Scans	Incremental reindexing with caching for speed
-🧹 Unused Files Finder	Quickly list and open unused modules
-⚙️ Configurable	Customize batch size, icons, colors, and extensions to scan
+
+- **Inline Import** 📦 - Counts	Shows how many other files reference each module directly in the Explorer
+- **Live Updates** 🔄	- Automatically rescans when you save files
+- **Dynamic Imports** 💥 -	Supports both static import x from and dynamic import() syntax
+- **Visual Flair** 🎨 - Uses emojis and colored badges (configurable)
+- **Smarter Scans** 🧠	- Incremental reindexing with caching for speed
+- **Unused Files Finder** 🧹 -	Quickly list and open unused modules
+- **Configurable** ⚙️	- Customize batch size, icons, colors, and extensions to scan
 
 ---
 
@@ -35,6 +36,7 @@ Feature	Description
 Command	Action
 
 ```vs-inline-imports.reIndex```	Force re-index the project
+
 ```vs-inline-imports.showActions```	Open quick actions menu
 
 ---
@@ -70,9 +72,11 @@ Hover for details. Click to open actions or rescan.
 
 List all unused files directly inside VS Code and open them with one click:
 
+```
 🗑️ src/components/OldChart.tsx
-🗑️ src/utils/deprecatedParser.js
 
+🗑️ src/utils/deprecatedParser.js
+```
 
 Includes search and separators for clarity.
 
