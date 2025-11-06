@@ -61,11 +61,19 @@ You can tweak settings in your workspace .vscode/settings.json:
   "inlineImports.fileExtensions": [".ts", ".tsx", ".js", ".jsx"],
   "inlineImports.batchSize": 50,
   "inlineImports.deleteIcon": "✂️",
-  "inlineImports.ignoredFiles": ["main.ts", "extension.ts", "**/*.d.ts"]
+  "inlineImports.ignoredFiles": [
+    "**/main.tsx",
+    "**/sw.ts",
+    "**/sw.js",
+    "**/extension.ts",
+    "**/*.d.ts"
+  ]
 }
 ```
 
 ### Settings Details
+
+[![](images/settings.png)](https://marketplace.visualstudio.com/items?itemName=rand0mc0d3r.vs-inline-imports)
 
 - **sourceFolder**: Root folder to scan for imports (default: `"src"`)
 - **fileExtensions**: File extensions to include (default: `[".ts", ".tsx", ".js", ".jsx"]`)

@@ -93,8 +93,10 @@
         "inlineImports.ignoredFiles": {
           "type": "array",
           "default": [
-            "main.ts",
-            "extension.ts",
+            "**/main.tsx",
+            "**/sw.ts",
+            "**/sw.js",
+            "**/extension.ts",
             "**/*.d.ts"
           ],
           "description": "Files to ignore when checking for unused imports. These files will be treated as having at least one import reference. Supports glob patterns.",

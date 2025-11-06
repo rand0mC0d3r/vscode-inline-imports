@@ -4,7 +4,7 @@ import { Node, Project, SourceFile, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
 import { SKIPPED_PACKAGES } from './constants';
 import { updateStatusBar } from './interfaceElements';
-import { resolveImportAbsolute, isFileIgnored } from './utils';
+import { isFileIgnored, resolveImportAbsolute } from './utils';
 
 // 🧠 persistent caches
 const fileHashCache = new Map<string, string>();
@@ -132,7 +132,7 @@ async function analyzeFileFast(
 
     if (resolved && resolved.startsWith(workspaceFolder)) {
       referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
-      
+
       // Update reverse import map
       if (!reverseImportMap.has(resolved)) {
         reverseImportMap.set(resolved, new Set());
@@ -233,9 +233,6 @@ export async function scanWorkspace(
       referenceMap.set(filePath, 1);
     }
   }
-
-  // const duration = (performance.now() - start).toFixed(1);
-  // status.text = `📊 ${total} files scanned in ${duration} ms`;
 
   const changedUrisFinal =
     changedUris.length > 0 ? changedUris : [...referenceMap.keys()].map(f => vscode.Uri.file(f));
