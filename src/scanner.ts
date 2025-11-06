@@ -12,6 +12,13 @@ const resolveCache = new Map<string, string | null>(); // key = filePath::spec
 const fileImportCache = new Map<string, string[]>();   // last known imports
 let previousReferenceMap = new Map<string, number>();
 
+// 🔗 Reverse import map: targetFile → [files that import it]
+const reverseImportMap = new Map<string, Set<string>>();
+
+export function getReverseImportMap(): Map<string, Set<string>> {
+  return reverseImportMap;
+}
+
 const project = new Project({
   compilerOptions: {
     allowJs: true,
@@ -125,6 +132,12 @@ async function analyzeFileFast(
 
     if (resolved && resolved.startsWith(workspaceFolder)) {
       referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
+      
+      // Update reverse import map
+      if (!reverseImportMap.has(resolved)) {
+        reverseImportMap.set(resolved, new Set());
+      }
+      reverseImportMap.get(resolved)!.add(filePath);
     }
   }
 
@@ -166,6 +179,7 @@ export async function scanWorkspace(
     async progress => {
       let processed = 0;
       referenceMap.clear();
+      reverseImportMap.clear();
 
       for (let i = 0; i < total; i += batchSize) {
         const batch = uris.slice(i, i + batchSize);
@@ -179,7 +193,14 @@ export async function scanWorkspace(
             referenceMap.set(uri.fsPath, referenceMap.get(uri.fsPath) ?? 0);
             for (const spec of cachedImports) {
               const resolved = resolveCache.get(`${uri.fsPath}::${spec}`);
-              if (resolved) {referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);}
+              if (resolved) {
+                referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
+                // Update reverse import map from cache
+                if (!reverseImportMap.has(resolved)) {
+                  reverseImportMap.set(resolved, new Set());
+                }
+                reverseImportMap.get(resolved)!.add(uri.fsPath);
+              }
             }
           } else {
             await analyzeFileFast(uri, referenceMap, config);

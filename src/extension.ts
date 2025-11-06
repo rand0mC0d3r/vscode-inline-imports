@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { PACKAGE_JSON_NAME, PACKAGE_NAME } from './constants';
 import { createDecorationProvider } from './decorator';
+import { showFileUsages } from './fileUsages';
 import { createActionsMenu, createStatusBarItem } from './interfaceElements';
 import { scanWorkspace } from './scanner';
 
@@ -51,6 +52,17 @@ export async function activate(context: vscode.ExtensionContext) {
   // 🔁 Manual re-index command
   context.subscriptions.push(
     vscode.commands.registerCommand(`${PACKAGE_JSON_NAME}.reIndex`, () => triggerScan('manual command'))
+  );
+
+  // 🔍 Show file usages command
+  context.subscriptions.push(
+    vscode.commands.registerCommand(`${PACKAGE_JSON_NAME}.showFileUsages`, async (uri: vscode.Uri) => {
+      if (!uri) {
+        vscode.window.showErrorMessage('No file selected');
+        return;
+      }
+      await showFileUsages(uri, config);
+    })
   );
 }
 
