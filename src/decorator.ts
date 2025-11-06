@@ -1,4 +1,3 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { BADGES } from './constants';
 
@@ -10,19 +9,21 @@ export function createDecorationProvider(
   return {
     onDidChangeFileDecorations: emitter.event,
     provideFileDecoration(uri) {
+
       const file = uri.fsPath;
       if (
-        referenceMap.size === 0 ||
-        !config.fileExtensions.some((ext: string) => file.endsWith(ext)) ||
-        !file.includes(`${path.sep}src${path.sep}`)
+        referenceMap.size === 0
+        || !config.fileExtensions.some((ext: string) => file.endsWith(ext))
       ) {return;}
+
+      console.log('Creating decoration provider with config:', referenceMap, config);
 
       const count = referenceMap.get(file);
       const hasRefs = !!count;
 
       return {
         badge: hasRefs
-          ? BADGES[count as keyof typeof BADGES] || `${count}👀`
+          ? BADGES[count as keyof typeof BADGES] || `#️⃣`
           : config.deleteIcon,
         tooltip: hasRefs
           ? `${count} files import this module`
