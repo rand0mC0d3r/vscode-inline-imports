@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import * as fs from 'fs/promises';
-import { Project, SourceFile, SyntaxKind } from 'ts-morph';
+import { Node, Project, SourceFile, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
 import { SKIPPED_PACKAGES } from './constants';
 import { updateStatusBar } from './interfaceElements';
@@ -48,33 +48,71 @@ async function analyzeFileFast(
   let sourceFile: SourceFile;
   try {
     const content = await fs.readFile(filePath, 'utf8');
-    sourceFile = project.createSourceFile(filePath, content, { overwrite: true });
+    // reuse or create the SourceFile
+    sourceFile = project.getSourceFile(filePath)
+      ?? project.createSourceFile(filePath, content, { overwrite: true });
+    // update content if it already existed
+    if (sourceFile.getFullText() !== content) {
+      sourceFile.replaceWithText(content);
+    }
   } catch {
     return;
   }
 
-  const imports: string[] = [];
+  const imports = new Set<string>();
 
-  // Handle classic imports (import X from '...')
+  // 1) Static imports (default, named, namespace, side-effect, type-only)
   for (const decl of sourceFile.getImportDeclarations()) {
     const spec = decl.getModuleSpecifierValue();
-    if (spec) {imports.push(spec);}
+    if (spec) {imports.add(spec);}
   }
 
-  // Handle dynamic imports: import('foo')
-  sourceFile.forEachDescendant((node: any) => {
-    if (node.getKind() === SyntaxKind.CallExpression) {
-      const call = node.asKind(SyntaxKind.CallExpression)!;
-      const expr = call.getExpression();
-      if (expr.getText() === 'import') {
-        const arg = call.getArguments()[0];
-        if (arg && arg.getKind() === SyntaxKind.StringLiteral) {
-          imports.push((arg as any).getLiteralText());
-        }
+  // 2) Re-exports: export * from 'x', export { a } from 'x'
+  for (const decl of sourceFile.getExportDeclarations()) {
+    const spec = decl.getModuleSpecifierValue();
+    if (spec) {imports.add(spec);}
+  }
+
+  // 3) Dynamic imports: import('x')
+  sourceFile.forEachDescendant(n => {
+    if (Node.isCallExpression(n)) {
+      const expr = n.getExpression();
+      // In the AST, dynamic import’s expression kind is ImportKeyword
+      const isDynamicImport =
+        expr.getKind() === SyntaxKind.ImportKeyword || expr.getText() === 'import';
+      if (isDynamicImport) {
+        const arg = n.getArguments()[0];
+        if (arg && Node.isStringLiteral(arg)) {imports.add(arg.getLiteralText());}
       }
     }
   });
 
+  // 4) CommonJS require('x')
+  sourceFile.forEachDescendant(n => {
+    if (Node.isCallExpression(n)) {
+      const expr = n.getExpression();
+      if (expr.getText() === 'require') {
+        const arg = n.getArguments()[0];
+        if (arg && Node.isStringLiteral(arg)) {imports.add(arg.getLiteralText());}
+      }
+    }
+  });
+
+  // 5) Import-equals: import x = require('x')
+  // (safe across ts-morph versions)
+  for (const decl of sourceFile.getDescendantsOfKind(SyntaxKind.ImportEqualsDeclaration)) {
+    const ref = decl.getModuleReference();
+    if (ref && ref.getKind() === SyntaxKind.ExternalModuleReference) {
+      // @ts-expect-error: .getExpression() returns a Node; older typings vary
+      const expr = ref.getExpression?.();
+      if (expr && Node.isStringLiteral(expr)) {imports.add(expr.getLiteralText());}
+    }
+  }
+
+
+  console.log(`🔍 Analyzed ${filePath} - found ${imports.size} imports`);
+
+  // ---- apply to your map/caches ----
   referenceMap.set(filePath, referenceMap.get(filePath) ?? 0);
 
   for (const spec of imports) {
@@ -93,7 +131,7 @@ async function analyzeFileFast(
     }
   }
 
-  fileImportCache.set(filePath, imports);
+  fileImportCache.set(filePath, Array.from(imports));
 }
 
 export async function getAllSourceFiles(config: vscode.WorkspaceConfiguration): Promise<vscode.Uri[]> {
