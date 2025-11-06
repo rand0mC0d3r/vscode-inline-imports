@@ -2,12 +2,12 @@
   "name": "vs-inline-imports",
   "publisher": "bd-code",
   "displayName": "Inline Imports for Typescript/Javascript",
-  "description": "VSCode extension to visualize inline import references for TypeScript and JavaScript files.",
+  "description": "Visualize inline import references for TypeScript and JavaScript files.",
   "repository": {
     "type": "git",
     "url": "https://github.com/rand0mC0d3r/vscode-inline-imports"
   },
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.105.0"
   },
