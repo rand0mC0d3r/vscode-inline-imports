@@ -19,11 +19,19 @@ export function createActionsMenu(vscode: typeof import('vscode'), context: vsco
 
 export function createStatusBarItem(context: vscode.ExtensionContext) {
     const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    status.text = "📦 Imports: 0 used / 0 unused";
-    status.tooltip = "Click to rescan project imports 🔄";
+    status.text = "$(file-code) Imports: 0 used / 0 unused";
+    status.tooltip = "Click to open Inline Imports actions menu";
     status.command = `${PACKAGE_JSON_NAME}.showActions`;
     status.show();
     context.subscriptions.push(status);
 
     return status;
+}
+
+export function updateStatusBar(referenceMap: Map<string, number>, status: vscode.StatusBarItem, totalFilesCount?: number) {
+  const used = referenceMap.size;
+  const allFiles = totalFilesCount || 0;
+  const unused = allFiles - used;
+  status.text = `$(file-code) ${used} used / ${unused} unused`;
+  status.tooltip = `Scanned ${allFiles} total files.\nClick to show Inline Imports actions menu`;
 }

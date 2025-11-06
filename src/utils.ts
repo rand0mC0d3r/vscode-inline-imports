@@ -3,6 +3,7 @@ import * as path from 'path';
 import { Project, SourceFile, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
 import { ALIASES, BADGES, EXTENSIONS, SKIPPED_PACKAGES } from './constants';
+import { updateStatusBar } from './interfaceElements';
 
 async function tryResolve(base: string, config: vscode.WorkspaceConfiguration): Promise<string | null> {
   // console.log(`🔗 Trying to resolve: ${base}`);
@@ -141,13 +142,6 @@ async function analyzeFile(file: SourceFile, referenceMap: Map<string, number>, 
   }
 }
 
-function updateStatusBar(referenceMap: Map<string, number>, status: vscode.StatusBarItem, totalFilesCount?: number) {
-  const used = referenceMap.size;
-  const allFiles = totalFilesCount || 0;
-  const unused = allFiles - used;
-  status.text = `📦 ${used} used / ${unused} unused`;
-  status.tooltip = `Scanned ${allFiles} total files.\nClick to rescan.`;
-}
 
 export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, referenceMap: Map<string, number>, config: vscode.WorkspaceConfiguration, status: vscode.StatusBarItem) {
   referenceMap.clear();
@@ -249,14 +243,12 @@ export function createDecorationProvider(referenceMap: Map<string, number>, emit
   return provider;
 }
 
-// 🗑️ Show unused files in a quick pick and optionally open them
 export async function showUnusedFiles(
   referenceMap: Map<string, number>,
   config: vscode.WorkspaceConfiguration
 ) {
   const allFiles = await getAllSourceFiles(config);
 
-  // Filter files that are inside src, have a valid extension, and are not referenced
   const unused = allFiles
     .filter(uri => {
       if (!uri.fsPath.includes(path.sep + 'src' + path.sep)) {return false;}
@@ -266,26 +258,63 @@ export async function showUnusedFiles(
     .sort((a, b) => a.fsPath.localeCompare(b.fsPath));
 
   if (unused.length === 0) {
-    vscode.window.showInformationMessage('🎉 No unused files detected. Your project is spotless!');
+    vscode.window.showInformationMessage('🎉 No unused files detected!');
     return;
   }
 
   console.log(`🧹 Found ${unused.length} unused files`);
-  const items = unused.map(uri => ({
-    label: path.basename(uri.fsPath),
-    description: uri.fsPath.replace(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '', ''),
-    uri,
-  }));
 
+  // --- Create a visual separator every 10 entries for large lists ---
+  const items: (vscode.QuickPickItem & { uri?: vscode.Uri })[] = [];
+  const firstBatch = unused.slice(0, 30); // Limit initial view to 30 for sanity
+
+  for (let i = 0; i < firstBatch.length; i++) {
+    if (i % 10 === 0 && i > 0) {
+      items.push({ label: '', kind: vscode.QuickPickItemKind.Separator });
+    }
+    const uri = firstBatch[i];
+    items.push({
+      label: path.basename(uri.fsPath),
+      description: uri.fsPath.replace(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '', ''),
+      uri,
+    });
+  }
+
+  if (unused.length > 30) {
+    items.push({
+      label: `...and ${unused.length - 30} more`,
+      description: 'Select to view the full list',
+    });
+  }
+
+  // --- Show the Quick Pick menu ---
   const pick = await vscode.window.showQuickPick(items, {
-    placeHolder: `🗑️ ${unused.length} unused files — select one to open or Esc to dismiss`,
-    canPickMany: true,
+    placeHolder: `🗑️ ${unused.length} unused files — select one to open`,
+    matchOnDescription: true,
+    ignoreFocusOut: true,
   });
 
-  if (pick && Array.isArray(pick) && pick.length > 0) {
-    for (const p of pick) {
-      const doc = await vscode.workspace.openTextDocument(p.uri);
-      await vscode.window.showTextDocument(doc, { preview: false });
+  // --- Handle user selection ---
+  if (!pick) {return;}
+
+  if (pick.label.startsWith('...and')) {
+    // User clicked the "more" item → show full list
+    const allItems = unused.map(uri => ({
+      label: path.basename(uri.fsPath),
+      description: uri.fsPath.replace(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '', ''),
+      uri,
+    }));
+    const fullPick = await vscode.window.showQuickPick(allItems, {
+      placeHolder: 'Full unused files list — select one to open',
+      matchOnDescription: true,
+    });
+    if (fullPick?.uri) {
+      const doc = await vscode.workspace.openTextDocument(fullPick.uri);
+      vscode.window.showTextDocument(doc, { preview: false });
     }
+  } else if (pick.uri) {
+    // Open directly
+    const doc = await vscode.workspace.openTextDocument(pick.uri);
+    vscode.window.showTextDocument(doc, { preview: false });
   }
 }
