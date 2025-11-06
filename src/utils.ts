@@ -105,19 +105,25 @@ async function getAllSourceFiles(config: vscode.WorkspaceConfiguration): Promise
 }
 
 async function analyzeFile(file: SourceFile, referenceMap: Map<string, number>, config: vscode.WorkspaceConfiguration) {
-
   const record = (resolved: string | null, type: string, spec: string) => {
     if (resolved) {
       referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
-      // console.log(`✅ ${type}: ${spec} -> ${resolved.split('/src').pop()}`);
+      console.log(`✅ ${file.getFilePath()} ${type}: ${spec} -> ${resolved.split('/src').pop()}`);
     } else {
-      // console.log(`❌ ${type} failed: ${spec}`);
+      console.log(`❌ ${file.getFilePath()} ${type} failed: ${spec}`);
     }
   };
+
+  referenceMap.set(file.getFilePath(), referenceMap.get(file.getFilePath()) ?? 0);
 
   // Static imports
   for (const imp of file.getImportDeclarations()) {
     const spec = imp.getModuleSpecifierValue();
+
+    if(!spec) {
+      console.warn(`⚠️ Static import with no argument in file: ${file.getFilePath()}`);
+      continue;
+    }
 
     if(SKIPPED_PACKAGES.includes(spec)) {
       continue;
@@ -134,14 +140,18 @@ async function analyzeFile(file: SourceFile, referenceMap: Map<string, number>, 
   for (const dyn of dynamicImports) {
     const arg = dyn.getArguments()[0]?.getText().replace(/['"`]/g, '');
 
+    if(!arg) {
+      console.warn(`⚠️ Dynamic import with no argument in file: ${file.getFilePath()}`);
+      continue;
+    }
+
     if(SKIPPED_PACKAGES.includes(arg)) {
       continue;
     }
 
-    if (arg) {record(await resolveImportAbsolute(file.getFilePath(), arg, config), 'dynamic import', arg);}
+    record(await resolveImportAbsolute(file.getFilePath(), arg, config), 'dynamic import', arg);
   }
 }
-
 
 export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, referenceMap: Map<string, number>, config: vscode.WorkspaceConfiguration, status: vscode.StatusBarItem) {
   referenceMap.clear();
@@ -208,17 +218,12 @@ export function createDecorationProvider(referenceMap: Map<string, number>, emit
     provideFileDecoration(uri) {
       if (referenceMap.size === 0 || !validExt.some((ext: any) => uri.fsPath.endsWith(ext))) {return;}
 
+      console.log(`🔍 Providing decoration for: ${uri.fsPath}`, referenceMap);
+
       // if outside /src/, skip
       if (!uri.fsPath.includes(path.sep + 'src' + path.sep)) {return;}
 
       const count = referenceMap.get(uri.fsPath);
-
-      if (count !== undefined) {
-        console.log(`🔍 Checking: ${uri.fsPath} -> ${count || 0} references`);
-      }
-      else {
-        console.log(`💥 Checking: ${uri.fsPath} -> not found in reference map`);
-      }
 
       if (!!count) {
         const badge = BADGES[count as keyof typeof BADGES] || `${count}👀`;
