@@ -8,8 +8,8 @@ import { resolveImportAbsolute } from './utils';
 
 // 🧠 persistent caches
 const fileHashCache = new Map<string, string>();
-const resolveCache = new Map<string, string | null>();
-const fileImportCache = new Map<string, string[]>(); // last known imports
+const resolveCache = new Map<string, string | null>(); // key = filePath::spec
+const fileImportCache = new Map<string, string[]>();   // last known imports
 let project: Project | null = null;
 let previousReferenceMap = new Map<string, number>();
 
@@ -29,22 +29,30 @@ function getProject(): Project {
   return project;
 }
 
+// ⚡️ Fast partial hash (reads only first 1KB)
 async function getFileHash(uri: vscode.Uri): Promise<string> {
   try {
-    const data = await fs.readFile(uri.fsPath);
-    return createHash('md5').update(data).digest('hex');
+    const handle = await fs.open(uri.fsPath, 'r');
+    const buffer = Buffer.alloc(1024);
+    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+    await handle.close();
+    return createHash('md5').update(buffer.subarray(0, bytesRead)).digest('hex');
   } catch {
     return '';
   }
 }
 
+// ⚡️ Single regex for static + dynamic imports
 function extractImportsFast(source: string): string[] {
-  const staticMatches = [...source.matchAll(/import\s+.*?['"](.+?)['"]/g)].map(m => m[1]);
-  const dynamicMatches = [...source.matchAll(/import\(['"](.+?)['"]\)/g)].map(m => m[1]);
-  return [...staticMatches, ...dynamicMatches].filter(Boolean);
+  const regex = /import(?:\s+.*?from\s+|\()?\s*['"](.+?)['"]/g;
+  return [...source.matchAll(regex)].map(m => m[1]).filter(Boolean);
 }
 
-async function analyzeFileFast(uri: vscode.Uri, referenceMap: Map<string, number>, config: vscode.WorkspaceConfiguration) {
+async function analyzeFileFast(
+  uri: vscode.Uri,
+  referenceMap: Map<string, number>,
+  config: vscode.WorkspaceConfiguration
+) {
   const filePath = uri.fsPath;
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
   const data = await fs.readFile(filePath, 'utf8');
@@ -55,12 +63,13 @@ async function analyzeFileFast(uri: vscode.Uri, referenceMap: Map<string, number
   for (const spec of imports) {
     if (!spec || SKIPPED_PACKAGES.includes(spec) || spec.startsWith('http')) {continue;}
 
-    // Reuse global resolution cache first
-    let resolved = resolveCache.get(spec);
+    // Scoped cache key per file
+    const cacheKey = `${filePath}::${spec}`;
+    let resolved = resolveCache.get(cacheKey);
+
     if (resolved === undefined) {
-      const full = await resolveImportAbsolute(filePath, spec, config);
-      resolveCache.set(spec, full);
-      resolved = full;
+      resolved = await resolveImportAbsolute(filePath, spec, config);
+      resolveCache.set(cacheKey, resolved);
     }
 
     if (resolved && resolved.startsWith(workspaceFolder)) {
@@ -73,9 +82,11 @@ async function analyzeFileFast(uri: vscode.Uri, referenceMap: Map<string, number
 
 export async function getAllSourceFiles(config: vscode.WorkspaceConfiguration): Promise<vscode.Uri[]> {
   const t0 = performance.now();
-  const uris = await vscode.workspace.findFiles(`${config.sourceFolder}/**/*.{ts,tsx,js,jsx}`, '**/node_modules/**');
-  const t1 = performance.now();
-  console.log(`⏱️ Found ${uris.length} source files in ${(t1 - t0).toFixed(1)} ms`);
+  const uris = await vscode.workspace.findFiles(
+    `${config.sourceFolder}/**/*.{ts,tsx,js,jsx}`,
+    '**/node_modules/**'
+  );
+  console.log(`⏱️ Found ${uris.length} source files in ${(performance.now() - t0).toFixed(1)} ms`);
   return uris;
 }
 
@@ -93,6 +104,7 @@ export async function scanWorkspace(
   const total = uris.length;
 
   const changedUris: vscode.Uri[] = [];
+  const start = performance.now();
 
   await vscode.window.withProgress(
     {
@@ -101,9 +113,7 @@ export async function scanWorkspace(
       cancellable: false,
     },
     async progress => {
-      const start = performance.now();
       let processed = 0;
-
       referenceMap.clear();
 
       for (let i = 0; i < total; i += batchSize) {
@@ -112,15 +122,13 @@ export async function scanWorkspace(
         await Promise.all(batch.map(async uri => {
           const newHash = await getFileHash(uri);
           const oldHash = fileHashCache.get(uri.fsPath);
+
           if (oldHash && oldHash === newHash && fileImportCache.has(uri.fsPath)) {
-            // Use cached imports
             const cachedImports = fileImportCache.get(uri.fsPath) || [];
             referenceMap.set(uri.fsPath, referenceMap.get(uri.fsPath) ?? 0);
             for (const spec of cachedImports) {
-              const resolved = resolveCache.get(spec);
-              if (resolved) {
-                referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
-              }
+              const resolved = resolveCache.get(`${uri.fsPath}::${spec}`);
+              if (resolved) {referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);}
             }
           } else {
             await analyzeFileFast(uri, referenceMap, config);
@@ -130,14 +138,16 @@ export async function scanWorkspace(
         }));
 
         processed += batch.length;
-        const percent = Math.min((processed / total) * 100, 100);
 
-        updateStatusBar(referenceMap, status, total);
-
-        progress.report({
-          increment: (batch.length / total) * 100,
-          message: `📂 ${processed}/${total} files (${percent.toFixed(1)}%)`,
-        });
+        // Throttled progress + status updates
+        if (i % (batchSize * 5) === 0 || processed === total) {
+          const percent = Math.min((processed / total) * 100, 100);
+          progress.report({
+            increment: (batch.length / total) * 100,
+            message: `📂 ${processed}/${total} files (${percent.toFixed(1)}%)`,
+          });
+          updateStatusBar(referenceMap, status, total);
+        }
       }
 
       const duration = (performance.now() - start).toFixed(1);
@@ -145,12 +155,12 @@ export async function scanWorkspace(
     }
   );
 
-  // only fire changed URIs to avoid blinking icons on saves
-  const changedUrisFinal = changedUris.length
-    ? changedUris
-    : [...referenceMap.keys()].map(f => vscode.Uri.file(f));
+  // const duration = (performance.now() - start).toFixed(1);
+  // status.text = `📊 ${total} files scanned in ${duration} ms`;
+
+  const changedUrisFinal =
+    changedUris.length > 0 ? changedUris : [...referenceMap.keys()].map(f => vscode.Uri.file(f));
 
   emitter.fire(changedUrisFinal);
-
   previousReferenceMap = new Map(referenceMap);
 }
