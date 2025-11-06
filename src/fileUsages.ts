@@ -3,14 +3,22 @@ import * as vscode from 'vscode';
 import { getReverseImportMap } from './scanner';
 
 /**
+ * Get relative path from workspace root, or return absolute path if no workspace
+ */
+function getRelativePath(filePath: string, workspaceRoot: string): string {
+  return workspaceRoot ? path.relative(workspaceRoot, filePath) : filePath;
+}
+
+/**
  * Show file usages in a quick pick menu
  */
 export async function showFileUsages(
   targetFile: vscode.Uri,
   config: vscode.WorkspaceConfiguration
 ) {
-  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
-  const relativePath = targetFile.fsPath.replace(workspaceRoot, '');
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(targetFile);
+  const workspaceRoot = workspaceFolder?.uri.fsPath || '';
+  const relativePath = getRelativePath(targetFile.fsPath, workspaceRoot);
   
   // Get the reverse import map
   const reverseMap = getReverseImportMap();
@@ -45,9 +53,10 @@ export async function showFileUsages(
     }
     
     const uri = usages[i];
+    const relPath = getRelativePath(uri.fsPath, workspaceRoot);
     items.push({
       label: path.basename(uri.fsPath),
-      description: uri.fsPath.replace(workspaceRoot, ''),
+      description: relPath,
       uri,
     });
   }
