@@ -94,9 +94,11 @@
           "type": "array",
           "default": [
             "**/main.tsx",
+            "**/main.jsx",
             "**/sw.ts",
             "**/sw.js",
             "**/extension.ts",
+            "**/extension.js",
             "**/*.d.ts"
           ],
           "description": "Files to ignore when checking for unused imports. These files will be treated as having at least one import reference. Supports glob patterns.",
