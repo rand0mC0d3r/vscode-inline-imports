@@ -89,6 +89,20 @@
           ],
           "description": "File extensions to include in the import scanning. Default: .ts, .tsx, .js, .jsx",
           "scope": "resource"
+        },
+        "inlineImports.ignoredFiles": {
+          "type": "array",
+          "default": [
+            "**/main.tsx",
+            "**/main.jsx",
+            "**/sw.ts",
+            "**/sw.js",
+            "**/extension.ts",
+            "**/extension.js",
+            "**/*.d.ts"
+          ],
+          "description": "Files to ignore when checking for unused imports. These files will be treated as having at least one import reference. Supports glob patterns.",
+          "scope": "resource"
         }
       }
     }
@@ -111,6 +125,7 @@
     "publish": "npm version patch && npm run changelog && npx vsce package && npx vsce publish && git add . && git commit -m \"chore: release new version\" && git push --follow-tags origin main"
   },
   "dependencies": {
+    "minimatch": "^10.1.1",
     "ts-morph": "^27.0.2"
   },
   "devDependencies": {
