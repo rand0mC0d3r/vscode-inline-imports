@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.13...HEAD)
+## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.14...HEAD)
+
+## [v0.0.14](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.13...v0.0.14) - 2025-11-06
+
+### Commits
+
+- refactor: reorganize imports and move getAllSourceFiles to scanner module [`6ed776c`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/6ed776c001f8af26e371f186b185577a97ff12ac)
+- refactor: move createDecorationProvider to decorator module and clean up imports [`8b6098b`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/8b6098bedabdc57fee3ff1a34958a31a1b0857bd)
+- refactor: improve file resolution logic and enhance tsconfig loading with caching [`793064f`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/793064f0bdbc6e2461d7ba4f5d7af05f19ed5a43)
+- refactor: optimize file hash calculation and improve import extraction logic [`efe84a6`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/efe84a6431b01faa0fd51bcb40cf9cc468f83847)
+- refactor: remove smartScanWorkspace function to streamline scanning process [`be442de`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/be442de65f8afc832c39264063827763a1d18118)
+- refactor: remove unused Project initialization and optimize progress reporting frequency [`7d7cd1f`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/7d7cd1fcca49fb5c74ac09f7990f4e74441732e7)
+- chore: release new version [`be2d5cd`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/be2d5cd018776aefcb67ce980295e2917f6f10d5)
 
 ## [v0.0.13](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.12...v0.0.13) - 2025-11-06
 
