@@ -5,13 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/0.0.8...HEAD)
+## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.9...HEAD)
+
+## [v0.0.9](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/0.0.8...v0.0.9) - 2025-11-06
 
 ### Commits
 
 - refactor: streamline import resolution logic in analyzeFile function [`3ba9e8f`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/3ba9e8fffcefcb3992ba0a335c9814a516368af6)
 - feat: enhance alias handling and improve logging for static and dynamic imports [`2db74df`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/2db74df4731974430d0b19b6deb2b0cb8a004b45)
 - feat: update version to 0.0.8 in package.json; add LICENSE file with MIT License [`5df887f`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/5df887fd2697f7e76874a06fadaf6cea3bf52e13)
+- chore: update publish script to include version bump before changelog generation [`ab7ca77`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/ab7ca778cb76e72d47162c89158eeb9e17f74914)
 - feat: improve status bar update logic and enhance import resolution caching [`fba66ec`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/fba66ec39a7041726f3ad5a21e4fa843bac1480e)
 
 ## [0.0.8](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/0.0.4...0.0.8) - 2025-11-06
