@@ -11,9 +11,13 @@ export const ALIASES = {
   '@/': 'root',
   '@services/': 'services',
   '@store/': 'store',
+  '@/store/': 'store',
   '@components/': 'components',
+  '@/components/': 'components',
   '@views/': 'views',
+  '@/views/': 'views',
   '@modules/': 'modules',
+  '@/modules/': 'modules',
 };
 
 export const BADGES = {

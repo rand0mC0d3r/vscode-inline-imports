@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import * as fs from 'fs/promises';
+import { Project, SourceFile, SyntaxKind } from 'ts-morph';
 import * as vscode from 'vscode';
 import { SKIPPED_PACKAGES } from './constants';
 import { updateStatusBar } from './interfaceElements';
@@ -10,6 +11,17 @@ const fileHashCache = new Map<string, string>();
 const resolveCache = new Map<string, string | null>(); // key = filePath::spec
 const fileImportCache = new Map<string, string[]>();   // last known imports
 let previousReferenceMap = new Map<string, number>();
+
+const project = new Project({
+  compilerOptions: {
+    allowJs: true,
+    checkJs: false,
+    jsx: 1,
+    moduleResolution: 2,
+  },
+  skipFileDependencyResolution: true,
+  skipAddingFilesFromTsConfig: true,
+});
 
 // ⚡️ Fast partial hash (reads only first 1KB)
 async function getFileHash(uri: vscode.Uri): Promise<string> {
@@ -25,11 +37,6 @@ async function getFileHash(uri: vscode.Uri): Promise<string> {
 }
 
 // ⚡️ Single regex for static + dynamic imports
-function extractImportsFast(source: string): string[] {
-  const regex = /import(?:\s+.*?from\s+|\()?\s*['"](.+?)['"]/g;
-  return [...source.matchAll(regex)].map(m => m[1]).filter(Boolean);
-}
-
 async function analyzeFileFast(
   uri: vscode.Uri,
   referenceMap: Map<string, number>,
@@ -37,15 +44,42 @@ async function analyzeFileFast(
 ) {
   const filePath = uri.fsPath;
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
-  const data = await fs.readFile(filePath, 'utf8');
-  const imports = extractImportsFast(data);
+
+  let sourceFile: SourceFile;
+  try {
+    const content = await fs.readFile(filePath, 'utf8');
+    sourceFile = project.createSourceFile(filePath, content, { overwrite: true });
+  } catch {
+    return;
+  }
+
+  const imports: string[] = [];
+
+  // Handle classic imports (import X from '...')
+  for (const decl of sourceFile.getImportDeclarations()) {
+    const spec = decl.getModuleSpecifierValue();
+    if (spec) {imports.push(spec);}
+  }
+
+  // Handle dynamic imports: import('foo')
+  sourceFile.forEachDescendant((node: any) => {
+    if (node.getKind() === SyntaxKind.CallExpression) {
+      const call = node.asKind(SyntaxKind.CallExpression)!;
+      const expr = call.getExpression();
+      if (expr.getText() === 'import') {
+        const arg = call.getArguments()[0];
+        if (arg && arg.getKind() === SyntaxKind.StringLiteral) {
+          imports.push((arg as any).getLiteralText());
+        }
+      }
+    }
+  });
 
   referenceMap.set(filePath, referenceMap.get(filePath) ?? 0);
 
   for (const spec of imports) {
     if (!spec || SKIPPED_PACKAGES.includes(spec) || spec.startsWith('http')) {continue;}
 
-    // Scoped cache key per file
     const cacheKey = `${filePath}::${spec}`;
     let resolved = resolveCache.get(cacheKey);
 
