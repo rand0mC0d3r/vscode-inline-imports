@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: update package.json for version 0.0.7 and add changelog generation [`93c0aa6`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/93c0aa64a3d556985e947a3f21715076b978e715)
 - feat: initialize VS Code extension with basic functionality and file decoration provider [`1cd2ae4`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/1cd2ae4c1e853ea2e17aa7bbb93cfcf2ad438073)
 - feat: update dependencies and enhance workspace scanning functionality [`aa015c8`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/aa015c8292dcbc879a33ac1d781abc5d37973f8c)
 - feat: refactor activate function to improve file scanning and configuration handling; add smartScanWorkspace for efficient import indexing [`6684c73`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/6684c73dc13bf7052d6704f1c169f88253ad1458)
