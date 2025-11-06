@@ -3,12 +3,17 @@
   "publisher": "bd-code",
   "displayName": "Inline Imports for Typescript/Javascript",
   "description": "Visualize inline import references for TypeScript and JavaScript files.",
-  "keywords": ["TypeScript", "Import detector", "JavaScript", "VSCode"],
+  "keywords": [
+    "TypeScript",
+    "Import detector",
+    "JavaScript",
+    "VSCode"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/rand0mC0d3r/vscode-inline-imports"
   },
-  "version": "0.0.8",
+  "version": "0.0.9",
   "engines": {
     "vscode": "^1.105.0"
   },
