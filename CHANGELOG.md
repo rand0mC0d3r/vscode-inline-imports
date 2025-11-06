@@ -5,7 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.16...HEAD)
+## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.17...HEAD)
+
+## [v0.0.17](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.16...v0.0.17) - 2025-11-06
+
+### Merged
+
+- Add ignoredFiles setting to exclude entry points from unused file detection [`#4`](https://github.com/rand0mC0d3r/vscode-inline-imports/pull/4)
+
+### Commits
+
+- Add ignoredFiles configuration and implement artificial count logic [`855980c`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/855980cb3c9776680d98efd8150bc6398b159a54)
+- Add tests for isFileIgnored utility function [`c77a6bc`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/c77a6bc560b6f084ef9cee2f1a26044debb46d6f)
+- Refactor code structure for improved readability and maintainability [`31017f9`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/31017f962f9b694feb975e69a26cc1a4e5b1c434)
+- Update README with ignoredFiles configuration documentation [`7f00de5`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/7f00de5722a75cadd99160db73c627b2ab51777a)
+- chore: release new version [`22189f1`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/22189f1695e9fad36d95c1edd5258087434604af)
+- Remove case-insensitive matching for file system consistency [`71e7dc6`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/71e7dc6eab8065e840755fcd2481a4b7d6ad1ba5)
+- Add additional file patterns to ignoredFiles configuration [`1fa6a2d`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/1fa6a2d275f14da32d0519558b155e0181f45961)
+- Initial plan [`3752343`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/375234392f1783517795ed69e1a17718595df246)
 
 ## [v0.0.16](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.15...v0.0.16) - 2025-11-06
 
