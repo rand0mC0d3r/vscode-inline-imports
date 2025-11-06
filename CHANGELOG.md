@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.12...HEAD)
+## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.13...HEAD)
+
+## [v0.0.13](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.12...v0.0.13) - 2025-11-06
+
+### Commits
+
+- Refactor code structure for improved readability and maintainability [`15b1ff6`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/15b1ff6dd5dd31a2147f3f10aa1d366ee527acdd)
+- chore: release new version [`14adf25`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/14adf255d4828e2613b100e1ec69c4c10205410e)
+- fix: remove GitHub release command from publish script [`5e2d71a`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/5e2d71a06d8416b140d5441f5c3a4d7644d669d5)
 
 ## [v0.0.12](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.11...v0.0.12) - 2025-11-06
 
