@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { BADGES } from './constants';
 
@@ -14,6 +15,7 @@ export function createDecorationProvider(
       if (
         referenceMap.size === 0
         || !config.fileExtensions.some((ext: string) => file.endsWith(ext))
+        || !file.includes(`${path.sep}src${path.sep}`)
       ) {return;}
 
       const count = referenceMap.get(file);
@@ -26,6 +28,7 @@ export function createDecorationProvider(
         tooltip: hasRefs
           ? `${count} files import this module`
           : 'No files import this module',
+        propagate: !hasRefs,
         color: hasRefs ? undefined : new vscode.ThemeColor('charts.red'),
       };
     },

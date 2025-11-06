@@ -109,9 +109,6 @@ async function analyzeFileFast(
     }
   }
 
-
-  console.log(`🔍 Analyzed ${filePath} - found ${imports.size} imports`);
-
   // ---- apply to your map/caches ----
   referenceMap.set(filePath, referenceMap.get(filePath) ?? 0);
 
