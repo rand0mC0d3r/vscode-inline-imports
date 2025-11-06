@@ -22,9 +22,9 @@ Key features:
   - `unusedFiles.ts` - Find and list files with no imports
   - `constants.ts` - Shared constants and package name
   - `utils.ts` - Utility functions including import path resolution
-  - `/test` - Test files
-- `/.github/workflows` - GitHub Actions CI/CD workflows
-- `/images` - Extension documentation images
+  - `test/` - Test files
+- `.github/workflows/` - GitHub Actions CI/CD workflows
+- `images/` - Extension documentation images
 - `package.json` - Extension manifest and configuration
 - `tsconfig.json` - TypeScript compiler configuration
 - `eslint.config.mjs` - ESLint configuration
@@ -136,10 +136,10 @@ When making changes:
 ## Dependencies
 
 **Production:**
-- `ts-morph` - TypeScript compiler API wrapper for parsing and analyzing code
+- `ts-morph` (^27.0.2) - TypeScript compiler API wrapper for parsing and analyzing code
 
 **Development:**
-- TypeScript 5.9+ with strict mode
+- TypeScript (^5.9.3) with strict mode
 - ESLint with TypeScript plugin
 - VS Code Extension Testing tools
 - esbuild for bundling
