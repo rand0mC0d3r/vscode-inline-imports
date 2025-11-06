@@ -16,8 +16,6 @@ export function createDecorationProvider(
         || !config.fileExtensions.some((ext: string) => file.endsWith(ext))
       ) {return;}
 
-      console.log('Creating decoration provider with config:', referenceMap, config);
-
       const count = referenceMap.get(file);
       const hasRefs = !!count;
 
