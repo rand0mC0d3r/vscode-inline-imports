@@ -35,7 +35,8 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument(() => triggerScan('file save')),
     vscode.workspace.onDidCreateFiles(() => triggerScan('file create')),
-    vscode.workspace.onDidDeleteFiles(() => triggerScan('file delete'))
+    vscode.workspace.onDidDeleteFiles(() => triggerScan('file delete')),
+    vscode.workspace.onDidRenameFiles(() => triggerScan('file rename')),
   );
 
   // ⚙️ Config change listener
