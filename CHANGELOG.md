@@ -5,11 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/0.0.8...HEAD)
+
+### Commits
+
+- refactor: streamline import resolution logic in analyzeFile function [`3ba9e8f`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/3ba9e8fffcefcb3992ba0a335c9814a516368af6)
+- feat: enhance alias handling and improve logging for static and dynamic imports [`2db74df`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/2db74df4731974430d0b19b6deb2b0cb8a004b45)
+- feat: update version to 0.0.8 in package.json; add LICENSE file with MIT License [`5df887f`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/5df887fd2697f7e76874a06fadaf6cea3bf52e13)
+- feat: improve status bar update logic and enhance import resolution caching [`fba66ec`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/fba66ec39a7041726f3ad5a21e4fa843bac1480e)
+
+## [0.0.8](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/0.0.4...0.0.8) - 2025-11-06
 
 ### Commits
 
 - chore: update package.json for version 0.0.7 and add changelog generation [`93c0aa6`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/93c0aa64a3d556985e947a3f21715076b978e715)
+- feat: update README for improved feature clarity and add new command; bump version to 0.0.5 in package.json [`107a967`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/107a967141a089d550d592fa9d0c1f7d944d3ce9)
+
+## 0.0.4 - 2025-11-06
+
+### Commits
+
 - feat: initialize VS Code extension with basic functionality and file decoration provider [`1cd2ae4`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/1cd2ae4c1e853ea2e17aa7bbb93cfcf2ad438073)
 - feat: update dependencies and enhance workspace scanning functionality [`aa015c8`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/aa015c8292dcbc879a33ac1d781abc5d37973f8c)
 - feat: refactor activate function to improve file scanning and configuration handling; add smartScanWorkspace for efficient import indexing [`6684c73`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/6684c73dc13bf7052d6704f1c169f88253ad1458)
@@ -40,7 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: clean up README by removing outdated release notes and guidelines [`639a115`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/639a1151863a1282e6b0172b52794750c77baf2f)
 - feat: enhance import resolution for '@views/' and '@modules/' aliases and remove debug logging [`29ff3c1`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/29ff3c1daca90d9503c565f1be29503460ce5872)
 - feat: update package.json with detailed display name and description; add delete icon configuration option [`0cd1514`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/0cd1514c6cd1f679247c9abc717f79b0db50e5cd)
-- feat: update README for improved feature clarity and add new command; bump version to 0.0.5 in package.json [`107a967`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/107a967141a089d550d592fa9d0c1f7d944d3ce9)
 - feat: improve file decoration provider with enhanced logging and configurable input patterns [`d753f3c`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/d753f3ccbf2d1ebfe80257714669d30ee33b632c)
 - feat: enhance decoration provider to display badge and tooltip based on import count [`1bc732f`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/1bc732fbf8aaf6ba4d2e4c118e09e85bddfdc140)
 - refactor: streamline file finding logic and improve formatting of compiler options [`11ea769`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/11ea7698b410c95a1317ef811620dff7957e4542)

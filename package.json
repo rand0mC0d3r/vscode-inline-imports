@@ -90,7 +90,7 @@
     "changelog": "auto-changelog --stdout --template keepachangelog > CHANGELOG.md",
     "test": "vscode-test",
     "vsix": "npm run compile && vsce package",
-    "publish": "npm run changelog && npx vsce publish"
+    "publish": "npm version patch && npm run changelog && npx vsce publish"
   },
   "dependencies": {
     "ts-morph": "^27.0.2"
