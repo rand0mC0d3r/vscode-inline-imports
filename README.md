@@ -57,12 +57,21 @@ You can tweak settings in your workspace .vscode/settings.json:
 
 ```json
 {
-  "importScanner.sourceFolder": "src",
-  "importScanner.fileExtensions": [".ts", ".tsx", ".js", ".jsx"],
-  "importScanner.batchSize": 50,
-  "importScanner.deleteIcon": "✂️"
+  "inlineImports.sourceFolder": "src",
+  "inlineImports.fileExtensions": [".ts", ".tsx", ".js", ".jsx"],
+  "inlineImports.batchSize": 50,
+  "inlineImports.deleteIcon": "✂️",
+  "inlineImports.ignoredFiles": ["main.ts", "extension.ts", "**/*.d.ts"]
 }
 ```
+
+### Settings Details
+
+- **sourceFolder**: Root folder to scan for imports (default: `"src"`)
+- **fileExtensions**: File extensions to include (default: `[".ts", ".tsx", ".js", ".jsx"]`)
+- **batchSize**: Number of files to process per batch (default: `25`)
+- **deleteIcon**: Icon for unused files (default: `"🗑️"`)
+- **ignoredFiles**: Files to treat as having at least one reference, preventing them from being marked as unused. Supports glob patterns (default: `["main.ts", "extension.ts", "**/*.d.ts"]`)
 
 ---
 
