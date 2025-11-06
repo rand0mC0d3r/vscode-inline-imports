@@ -1,11 +1,17 @@
 # 🧩 VS Inline Imports
 
+[![](https://img.shields.io/github/issues/rand0mc0d3r/vscode-inline-imports?style=flat-square)](https://github.com/rand0mc0d3r/vscode-inline-imports/issues)
+[![](https://img.shields.io/github/stars/rand0mc0d3r/vscode-inline-imports?style=flat-square)](https://github.com/rand0mc0d3r/vscode-inline-imports/stargazers)
+
 Instantly see how many files import each module — right inside your VS Code explorer.
 It’s like knip, but visual. Interactive. And ✨ a little cheeky.
 
 ## 🚀 Features
 
+
 Feature	Description
+
+[![](images/preview.png)](https://marketplace.visualstudio.com/items?itemName=rand0mc0d3r.vs-inline-imports)
 
 - **Inline Import** 📦 - Counts	Shows how many other files reference each module directly in the Explorer
 - **Live Updates** 🔄	- Automatically rescans when you save files
@@ -18,6 +24,8 @@ Feature	Description
 ---
 
 ## 🪄 Usage
+
+[![](images/interaction.png)](https://marketplace.visualstudio.com/items?itemName=rand0mc0d3r.vs-inline-imports)
 
 - Open your project in VS Code
 - The extension starts scanning automatically
@@ -32,6 +40,8 @@ Feature	Description
 ---
 
 ## 🧰 Commands
+
+[![](images/preferences.png)](https://marketplace.visualstudio.com/items?itemName=rand0mc0d3r.vs-inline-imports)
 
 Command	Action
 
@@ -58,6 +68,8 @@ You can tweak settings in your workspace .vscode/settings.json:
 
 ## 📊 Status Bar
 
+[![](images/statusBar.png)](https://marketplace.visualstudio.com/items?itemName=rand0mc0d3r.vs-inline-imports)
+
 The status bar item shows a quick summary:
 
 ```
@@ -69,6 +81,8 @@ Hover for details. Click to open actions or rescan.
 ---
 
 ## 🧹 Show Unused Files
+
+[![](images/unusedFilesJump.png)](https://marketplace.visualstudio.com/items?itemName=rand0mc0d3r.vs-inline-imports)
 
 List all unused files directly inside VS Code and open them with one click:
 
@@ -83,6 +97,8 @@ Includes search and separators for clarity.
 ---
 
 ## ⚡ Performance
+
+[![](images/indexerProgress.png)](https://marketplace.visualstudio.com/items?itemName=rand0mc0d3r.vs-inline-imports)
 
 - Caches file hashes to skip unchanged files
 - Keeps a persistent ts-morph project
@@ -117,3 +133,7 @@ code --extensionDevelopmentPath=.
 ## 📜 License
 
 MIT — because good code should roam free.
+
+---
+
+NOTE: Aid in development was via VSCode Copilot for API surface knowledge and boilerplate.
