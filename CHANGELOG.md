@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.10...HEAD)
+## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.11...HEAD)
+
+## [v0.0.11](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.10...v0.0.11) - 2025-11-06
+
+### Commits
+
+- chore: add GitHub Actions workflow for releasing extension [`4a63475`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/4a6347515c2b7041a7b124c230b75c73c166c929)
+- chore: release new version [`f5491db`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/f5491db06503f6f3c45a3be455092719ef240be9)
+- chore: enhance publish script to automate GitHub release creation [`319884f`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/319884fe7a8afe54b23e35769630ffc06e5fdbf7)
 
 ## [v0.0.10](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.9...v0.0.10) - 2025-11-06
 
