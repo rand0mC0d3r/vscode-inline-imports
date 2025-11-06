@@ -1,109 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { getAllSourceFiles } from './scanner';
-import { resolveImportAbsolute } from './utils';
-
-/**
- * Find all files that import the given target file
- */
-export async function findFileUsages(
-  targetFile: vscode.Uri,
-  config: vscode.WorkspaceConfiguration
-): Promise<vscode.Uri[]> {
-  const allFiles = await getAllSourceFiles(config);
-  const targetPath = targetFile.fsPath;
-  const usages: vscode.Uri[] = [];
-
-  // Import scanner module to access the project
-  const { Project, Node, SyntaxKind } = await import('ts-morph');
-  const project = new Project({
-    compilerOptions: {
-      allowJs: true,
-      checkJs: false,
-      jsx: 1,
-      moduleResolution: 2,
-    },
-    skipFileDependencyResolution: true,
-    skipAddingFilesFromTsConfig: true,
-  });
-
-  // Check each file to see if it imports the target
-  for (const fileUri of allFiles) {
-    if (fileUri.fsPath === targetPath) {
-      continue; // Skip the target file itself
-    }
-
-    try {
-      const content = await vscode.workspace.fs.readFile(fileUri);
-      const contentStr = Buffer.from(content).toString('utf8');
-      
-      // Create or get the source file
-      const sourceFile = project.getSourceFile(fileUri.fsPath)
-        ?? project.createSourceFile(fileUri.fsPath, contentStr, { overwrite: true });
-
-      let importsTarget = false;
-
-      // Check static imports
-      for (const decl of sourceFile.getImportDeclarations()) {
-        const spec = decl.getModuleSpecifierValue();
-        if (spec) {
-          const resolved = await resolveImportAbsolute(fileUri.fsPath, spec, config);
-          if (resolved === targetPath) {
-            importsTarget = true;
-            break;
-          }
-        }
-      }
-
-      // Check re-exports
-      if (!importsTarget) {
-        for (const decl of sourceFile.getExportDeclarations()) {
-          const spec = decl.getModuleSpecifierValue();
-          if (spec) {
-            const resolved = await resolveImportAbsolute(fileUri.fsPath, spec, config);
-            if (resolved === targetPath) {
-              importsTarget = true;
-              break;
-            }
-          }
-        }
-      }
-
-      // Check dynamic imports and require calls
-      if (!importsTarget) {
-        sourceFile.forEachDescendant((n: any) => {
-          if (Node.isCallExpression(n)) {
-            const expr = n.getExpression();
-            const isDynamicImport =
-              expr.getKind() === SyntaxKind.ImportKeyword || expr.getText() === 'import';
-            const isRequire = expr.getText() === 'require';
-
-            if (isDynamicImport || isRequire) {
-              const arg = n.getArguments()[0];
-              if (arg && Node.isStringLiteral(arg)) {
-                const spec = arg.getLiteralText();
-                resolveImportAbsolute(fileUri.fsPath, spec, config).then(resolved => {
-                  if (resolved === targetPath) {
-                    importsTarget = true;
-                  }
-                });
-              }
-            }
-          }
-        });
-      }
-
-      if (importsTarget) {
-        usages.push(fileUri);
-      }
-    } catch (error) {
-      // Skip files that can't be read or parsed
-      console.warn(`Failed to analyze ${fileUri.fsPath}:`, error);
-    }
-  }
-
-  return usages.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
-}
+import { getReverseImportMap } from './scanner';
 
 /**
  * Show file usages in a quick pick menu
@@ -114,25 +11,21 @@ export async function showFileUsages(
 ) {
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
   const relativePath = targetFile.fsPath.replace(workspaceRoot, '');
+  
+  // Get the reverse import map
+  const reverseMap = getReverseImportMap();
+  const importers = reverseMap.get(targetFile.fsPath);
 
-  // Show progress while finding usages
-  const usages = await vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: `🔍 Finding usages of ${path.basename(targetFile.fsPath)}...`,
-      cancellable: false,
-    },
-    async () => {
-      return await findFileUsages(targetFile, config);
-    }
-  );
-
-  if (usages.length === 0) {
+  if (!importers || importers.size === 0) {
     vscode.window.showInformationMessage(
       `📁 No usages found for ${path.basename(targetFile.fsPath)}`
     );
     return;
   }
+
+  const usages = Array.from(importers)
+    .map(filePath => vscode.Uri.file(filePath))
+    .sort((a, b) => a.fsPath.localeCompare(b.fsPath));
 
   console.log(`🔍 Found ${usages.length} usages for ${relativePath}`);
 
