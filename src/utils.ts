@@ -165,11 +165,11 @@ export function isFileIgnored(
 
   for (const pattern of ignoredFiles) {
     // Check against filename
-    if (minimatch(fileName, pattern, { nocase: true })) {
+    if (minimatch(fileName, pattern)) {
       return true;
     }
     // Check against relative path
-    if (minimatch(relativePath, pattern, { nocase: true })) {
+    if (minimatch(relativePath, pattern)) {
       return true;
     }
   }
