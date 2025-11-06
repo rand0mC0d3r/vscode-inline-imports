@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { PACKAGE_JSON_NAME } from './constants';
-import { scanWorkspace, showUnusedFiles } from './utils';
+import { scanWorkspace } from './scanner';
+import { showUnusedFiles } from './utils';
 
 export function createActionsMenu(vscode: typeof import('vscode'), context: vscode.ExtensionContext, emitter: vscode.EventEmitter<vscode.Uri[]>, referenceMap: Map<string, number>, config: vscode.WorkspaceConfiguration, status: vscode.StatusBarItem) {
   const showActions = vscode.commands.registerCommand("vs-inline-imports.showActions", async () => {
