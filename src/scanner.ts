@@ -1,6 +1,5 @@
 import { createHash } from 'crypto';
 import * as fs from 'fs/promises';
-import { Project } from 'ts-morph';
 import * as vscode from 'vscode';
 import { SKIPPED_PACKAGES } from './constants';
 import { updateStatusBar } from './interfaceElements';
@@ -10,24 +9,7 @@ import { resolveImportAbsolute } from './utils';
 const fileHashCache = new Map<string, string>();
 const resolveCache = new Map<string, string | null>(); // key = filePath::spec
 const fileImportCache = new Map<string, string[]>();   // last known imports
-let project: Project | null = null;
 let previousReferenceMap = new Map<string, number>();
-
-function getProject(): Project {
-  if (!project) {
-    project = new Project({
-      compilerOptions: {
-        allowJs: true,
-        checkJs: false,
-        jsx: 1,
-        moduleResolution: 2,
-      },
-      skipFileDependencyResolution: true,
-      skipAddingFilesFromTsConfig: true,
-    });
-  }
-  return project;
-}
 
 // ⚡️ Fast partial hash (reads only first 1KB)
 async function getFileHash(uri: vscode.Uri): Promise<string> {
@@ -140,7 +122,7 @@ export async function scanWorkspace(
         processed += batch.length;
 
         // Throttled progress + status updates
-        if (i % (batchSize * 5) === 0 || processed === total) {
+        if (i % (batchSize * 2) === 0 || processed === total) {
           const percent = Math.min((processed / total) * 100, 100);
           progress.report({
             increment: (batch.length / total) * 100,
