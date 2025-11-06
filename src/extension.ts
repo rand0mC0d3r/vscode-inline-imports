@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { PACKAGE_JSON_NAME, PACKAGE_NAME } from './constants';
+import { createDecorationProvider } from './decorator';
 import { createActionsMenu, createStatusBarItem } from './interfaceElements';
 import { scanWorkspace } from './scanner';
-import { createDecorationProvider } from './utils';
 
 export async function activate(context: vscode.ExtensionContext) {
   const emitter = new vscode.EventEmitter<vscode.Uri[]>();

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { ALIASES, BADGES, EXTENSIONS, SKIPPED_PACKAGES } from './constants';
+import { ALIASES, EXTENSIONS, SKIPPED_PACKAGES } from './constants';
 import { getAllSourceFiles } from './scanner';
 
 async function tryResolve(base: string, config: vscode.WorkspaceConfiguration): Promise<string | null> {
@@ -93,44 +93,6 @@ export async function resolveImportAbsolute(fromFsPath: string, spec: string, co
     await resolveRelative(spec, fromFsPath, config) ||
     (console.warn(`⚠️ Could not resolve import: ${spec} ${baseUrl} ${pathsMap} ${workspaceRoot} ${fromFsPath}`), null)
   );
-}
-
-export function createDecorationProvider(referenceMap: Map<string, number>, emitter: vscode.EventEmitter<vscode.Uri[]>, config: vscode.WorkspaceConfiguration): vscode.FileDecorationProvider {
-  const validExt = config.fileExtensions;
-
-  const provider: vscode.FileDecorationProvider = {
-    onDidChangeFileDecorations: emitter.event,
-    provideFileDecoration(uri) {
-      if (referenceMap.size === 0 || !validExt.some((ext: any) => uri.fsPath.endsWith(ext))) {return;}
-
-      console.log(`🔍 Providing decoration for: ${uri.fsPath}`, referenceMap);
-
-      // if outside /src/, skip
-      if (!uri.fsPath.includes(path.sep + 'src' + path.sep)) {return;}
-
-      const count = referenceMap.get(uri.fsPath);
-
-      if (!!count) {
-        const badge = BADGES[count as keyof typeof BADGES] || `${count}👀`;
-        const tooltip = `${count} files import this module`;
-        return {
-          badge,
-          tooltip,
-          color: undefined,
-        };
-      }
-
-      console.log(`🗑️ Marking for deletion: ${uri.fsPath}`);
-
-      return {
-        badge: config.deleteIcon,
-        tooltip: 'No files import this module',
-        color: new vscode.ThemeColor('charts.red'),
-      };
-    },
-  };
-
-  return provider;
 }
 
 export async function showUnusedFiles(
