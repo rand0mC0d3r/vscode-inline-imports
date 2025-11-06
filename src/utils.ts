@@ -105,52 +105,22 @@ async function getAllSourceFiles(config: vscode.WorkspaceConfiguration): Promise
 }
 
 async function analyzeFile(file: SourceFile, referenceMap: Map<string, number>, config: vscode.WorkspaceConfiguration) {
-  const record = (resolved: string | null, type: string, spec: string) => {
-    if (resolved) {
-      referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);
-      console.log(`✅ ${file.getFilePath()} ${type}: ${spec} -> ${resolved.split('/src').pop()}`);
-    } else {
-      console.log(`❌ ${file.getFilePath()} ${type} failed: ${spec}`);
-    }
+  const filePath = file.getFilePath();
+  referenceMap.set(filePath, referenceMap.get(filePath) ?? 0);
+
+  const record = async (spec?: string) => {
+    if (!spec || SKIPPED_PACKAGES.includes(spec)) {return;}
+    const resolved = await resolveImportAbsolute(filePath, spec, config);
+    if (resolved) {referenceMap.set(resolved, (referenceMap.get(resolved) ?? 0) + 1);}
   };
 
-  referenceMap.set(file.getFilePath(), referenceMap.get(file.getFilePath()) ?? 0);
-
-  // Static imports
-  for (const imp of file.getImportDeclarations()) {
-    const spec = imp.getModuleSpecifierValue();
-
-    if(!spec) {
-      console.warn(`⚠️ Static import with no argument in file: ${file.getFilePath()}`);
-      continue;
-    }
-
-    if(SKIPPED_PACKAGES.includes(spec)) {
-      continue;
-    }
-
-    record(await resolveImportAbsolute(file.getFilePath(), spec, config), 'static import', spec);
-  }
-
-  // Dynamic imports
-  const dynamicImports = file
-    .getDescendantsOfKind(SyntaxKind.CallExpression)
-    .filter(n => n.getExpression().getText() === 'import');
-
-  for (const dyn of dynamicImports) {
-    const arg = dyn.getArguments()[0]?.getText().replace(/['"`]/g, '');
-
-    if(!arg) {
-      console.warn(`⚠️ Dynamic import with no argument in file: ${file.getFilePath()}`);
-      continue;
-    }
-
-    if(SKIPPED_PACKAGES.includes(arg)) {
-      continue;
-    }
-
-    record(await resolveImportAbsolute(file.getFilePath(), arg, config), 'dynamic import', arg);
-  }
+  await Promise.all([
+    ...file.getImportDeclarations().map(i => record(i.getModuleSpecifierValue())),
+    ...file
+      .getDescendantsOfKind(SyntaxKind.CallExpression)
+      .filter(n => n.getExpression().getText() === 'import')
+      .map(n => record(n.getArguments()[0]?.getText()?.replace(/['"`]/g, ''))),
+  ]);
 }
 
 export async function scanWorkspace(emitter: vscode.EventEmitter<vscode.Uri[]>, referenceMap: Map<string, number>, config: vscode.WorkspaceConfiguration, status: vscode.StatusBarItem) {
