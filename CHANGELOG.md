@@ -5,7 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.19...HEAD)
+## [Unreleased](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.20...HEAD)
+
+## [v0.0.20](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.19...v0.0.20) - 2025-11-07
+
+### Merged
+
+- Add delete all unused files action to actions menu [`#8`](https://github.com/rand0mC0d3r/vscode-inline-imports/pull/8)
+- ✨ Add GitHub Copilot instructions [`#6`](https://github.com/rand0mC0d3r/vscode-inline-imports/pull/6)
+
+### Commits
+
+- Add GitHub Copilot instructions file [`dd03554`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/dd035543cff5043fc02db595179dce20c63dfed2)
+- Add delete all unused files action with confirmation [`abf9631`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/abf96315a032297db96ec9157f9999f155da31b2)
+- Fix code review feedback - use configurable sourceFolder and accurate deletion message [`3f52ee2`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/3f52ee2acb2ca116845d44a08a61533f1e1dfadd)
+- Initial plan [`5c80349`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/5c8034917f5a144a0dc72e6e10983d04289095fb)
+- test: remove obsolete extension test suite [`6d4987d`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/6d4987d1c554d2e7c773116fb7913833c7a1551a)
+- Fix path notation and add version specificity to instructions [`791a993`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/791a993f3500b8b6fe9ac41431f396311e5c650b)
+- chore: release new version [`5e02743`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/5e02743253f342aabb5be162c1c41a9881cb2f11)
+- feat: add file rename event to trigger re-scan [`9e7ea4c`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/9e7ea4c6f5d7a89cf72fb72a8a7bdf79caa89ee8)
+- Initial plan [`f20eb33`](https://github.com/rand0mC0d3r/vscode-inline-imports/commit/f20eb33cfecb563a47e8c1c0c2f0dc54ed2b8869)
 
 ## [v0.0.19](https://github.com/rand0mC0d3r/vscode-inline-imports/compare/v0.0.18...v0.0.19) - 2025-11-06
 
